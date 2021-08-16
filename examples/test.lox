@@ -1,3 +1,21 @@
-fun () {
+fun noop() {
     return nil
+}
+
+fun getFloat() {
+    var s = nil
+    s = 123.456
+    return s
+}
+
+func number (s) {
+    if s == "" || s == nil {
+        return false
+    }
+
+    if s == "asdasd" && s != nil {
+        return true
+    }
+
+    return !s
 }

@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/chzyer/readline"
 	"golox/lox"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,8 +24,40 @@ func main() {
 			os.Exit(2)
 		}
 	} else {
-
+		err := runPrompt()
+		if err != nil {
+			os.Exit(3)
+		}
 	}
+}
+
+func runPrompt() error {
+	fmt.Println("Welcome to lox command prompt!")
+	defer func() {
+		fmt.Println("Goodbye!")
+	}()
+
+	reader, err := readline.New("lox > ")
+
+	if err != nil {
+		return err
+	}
+
+	for {
+		fmt.Print("lox > ")
+		line, err := reader.Readline()
+		if err != nil {
+			if err == io.EOF || err == readline.ErrInterrupt {
+				break
+			}
+
+			return err
+		}
+
+		fmt.Print(line)
+	}
+
+	return nil
 }
 
 func runFile(path string) error {
@@ -41,7 +75,7 @@ func runFile(path string) error {
 }
 
 func run(b []byte) error {
-	s := lox.NewScanner(b)
+	s := lox.NewScanner(string(b))
 
 	tokens, err := s.ScanTokens()
 	if err != nil {
@@ -49,7 +83,7 @@ func run(b []byte) error {
 	}
 
 	for _, t := range tokens {
-		fmt.Printf("Token: %s \n", t)
+		fmt.Printf("Token: %s \n", t.String())
 	}
 
 	return nil
