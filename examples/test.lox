@@ -1,6 +1,8 @@
+/*
 fun noop() {
     return nil
 }
+
 
 fun getFloat() {
     var s = nil
@@ -19,3 +21,7 @@ func number (s) {
 
     return !s
 }
+*/
+
+-123*(45.67) == 12
+

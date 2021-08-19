@@ -29,6 +29,7 @@ func (s *Scanner) ScanTokens() ([]*Token, error) {
 		}
 	}
 
+	s.addTokenByType(EOF)
 	return s.tokens, nil
 }
 
@@ -64,6 +65,9 @@ func (s *Scanner) scanToken() error {
 		s.addTokenByType(SEMICOLON)
 		break
 	case '*':
+		if s.iterator.match('/') {
+			return ErrUnexpectedToken
+		}
 		s.addTokenByType(STAR)
 		break
 	case '!':
@@ -99,24 +103,19 @@ func (s *Scanner) scanToken() error {
 		s.addTokenByType(t)
 		break
 	case '/':
-		if s.iterator.match('/') {
-			for s.iterator.peek() != '\n' && !s.iterator.isAtEnd() {
-				s.iterator.advance()
-			}
-		} else {
-			s.addTokenByType(SLASH)
-		}
+		s.comment()
+		break
 	case '|':
 		if s.iterator.match('|') {
 			s.addTokenByType(OR)
 		} else {
-			return ErrUnexpectedCharacter
+			return ErrUnexpectedToken
 		}
 	case '&':
 		if s.iterator.match('&') {
 			s.addTokenByType(AND)
 		} else {
-			return ErrUnexpectedCharacter
+			return ErrUnexpectedToken
 		}
 	case ' ':
 	case '\r':
@@ -139,10 +138,26 @@ func (s *Scanner) scanToken() error {
 			break
 		}
 
-		return ErrUnexpectedCharacter
+		return ErrUnexpectedToken
 	}
 
 	return nil
+}
+
+func (s *Scanner) comment() {
+	if s.iterator.match('/') {
+		for s.iterator.peek() != '\n' && !s.iterator.isAtEnd() {
+			s.iterator.advance()
+		}
+	} else if s.iterator.match('*') {
+		for !s.iterator.isAtEnd() {
+			if s.iterator.advance() == '*' && s.iterator.advance() == '/' {
+				break
+			}
+		}
+	} else {
+		s.addTokenByType(SLASH)
+	}
 }
 
 func (s *Scanner) number() error {

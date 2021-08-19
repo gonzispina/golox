@@ -75,16 +75,26 @@ func runFile(path string) error {
 }
 
 func run(b []byte) error {
-	s := lox.NewScanner(string(b))
-
-	tokens, err := s.ScanTokens()
+	tokens, err := lox.NewScanner(string(b)).ScanTokens()
 	if err != nil {
 		return err
 	}
 
-	for _, t := range tokens {
-		fmt.Printf("Token: %s \n", t.String())
+	if len(tokens) == 0 {
+		return nil
 	}
+
+	e, err := lox.NewParser(tokens).Parse()
+	if err != nil {
+		return err
+	}
+
+	value, err := lox.NewASTPrinter().Print(e)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(value)
 
 	return nil
 }

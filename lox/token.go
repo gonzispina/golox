@@ -97,3 +97,18 @@ type Token struct {
 func (t *Token) String() string {
 	return fmt.Sprintf("[Line: %v] %s %s %v", t.line, t.tokenType, t.lexeme, t.literal)
 }
+
+// Is the of the type passed
+func (t *Token) Is(tt TokenType) bool {
+	return t.tokenType == tt
+}
+
+// OneOf the types passed
+func (t *Token) OneOf(tts ...TokenType) bool {
+	for _, tt := range tts {
+		if t.Is(tt) {
+			return true
+		}
+	}
+	return false
+}
