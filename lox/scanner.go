@@ -66,7 +66,7 @@ func (s *Scanner) scanToken() error {
 		break
 	case '*':
 		if s.iterator.match('/') {
-			return ErrUnexpectedToken
+			return UnexpectedTokenError(string(s.iterator.peek()), s.iterator.line, s.iterator.column)
 		}
 		s.addTokenByType(STAR)
 		break
@@ -109,13 +109,13 @@ func (s *Scanner) scanToken() error {
 		if s.iterator.match('|') {
 			s.addTokenByType(OR)
 		} else {
-			return ErrUnexpectedToken
+			return UnexpectedTokenError(string(s.iterator.next()), s.iterator.line, s.iterator.column+1)
 		}
 	case '&':
 		if s.iterator.match('&') {
 			s.addTokenByType(AND)
 		} else {
-			return ErrUnexpectedToken
+			return UnexpectedTokenError(string(s.iterator.next()), s.iterator.line, s.iterator.column+1)
 		}
 	case ' ':
 	case '\r':
@@ -138,7 +138,7 @@ func (s *Scanner) scanToken() error {
 			break
 		}
 
-		return ErrUnexpectedToken
+		return UnexpectedTokenError(string(s.iterator.peek()), s.iterator.line, s.iterator.column)
 	}
 
 	return nil
@@ -201,7 +201,7 @@ func (s *Scanner) string() error {
 	}
 
 	if s.iterator.isAtEnd() {
-		return ErrUnterminatedString
+		return UnterminatedStringError(s.iterator.line, s.iterator.column)
 	}
 
 	s.iterator.advance()

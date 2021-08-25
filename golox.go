@@ -89,7 +89,7 @@ func run(b []byte) error {
 		return err
 	}
 
-	value, err := lox.NewASTPrinter().Print(e)
+	value, err := lox.NewInterpreter().Interpret(e)
 	if err != nil {
 		return err
 	}

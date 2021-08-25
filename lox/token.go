@@ -76,12 +76,13 @@ var Reserved = map[string]TokenType{
 }
 
 // NewToken constructor
-func NewToken(tokenType TokenType, lexeme string, literal interface{}, line int) *Token {
+func NewToken(tokenType TokenType, lexeme string, literal interface{}, line, column int) *Token {
 	return &Token{
 		tokenType: tokenType,
 		lexeme:    lexeme,
 		literal:   literal,
 		line:      line,
+		column:    column,
 	}
 }
 
@@ -91,6 +92,7 @@ type Token struct {
 	lexeme    string
 	literal   interface{}
 	line      int
+	column    int
 }
 
 // String cast

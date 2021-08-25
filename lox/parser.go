@@ -35,11 +35,7 @@ func (p *Parser) isAtEnd() bool {
 }
 
 func (p *Parser) Parse() (Expression, error) {
-	e, err := p.expression()
-	if err != nil {
-		return nil, NewParserError(err, p.current())
-	}
-	return e, nil
+	return p.expression()
 }
 
 func (p *Parser) synchronize() {
@@ -165,11 +161,11 @@ func (p *Parser) primary() (Expression, error) {
 		}
 
 		if !p.advance().Is(RIGHT_PAREN) {
-			return nil, ErrUnclosedParenthesis
+			return nil, UnclosedParenthesisError(p.current())
 		}
 
 		return NewGrouping(expression), nil
 	}
 
-	return nil, ErrUnhandledToken
+	return nil, UnhandledTokenError(p.current())
 }
