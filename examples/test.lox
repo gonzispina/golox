@@ -23,5 +23,9 @@ func number (s) {
 }
 */
 
--123*(45.67) == 12
+var a = "hola Gonza";
+var b = (127 + 73) / 2;
+
+print b;
+print a;
 

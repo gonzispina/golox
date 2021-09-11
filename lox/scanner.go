@@ -196,8 +196,10 @@ func (s *Scanner) identifier() {
 }
 
 func (s *Scanner) string() error {
+	var value string
 	for s.iterator.peek() != '"' && !s.iterator.isAtEnd() {
-		s.iterator.advance()
+		r := s.iterator.advance()
+		value += string(r)
 	}
 
 	if s.iterator.isAtEnd() {
@@ -205,7 +207,7 @@ func (s *Scanner) string() error {
 	}
 
 	s.iterator.advance()
-	s.addToken(STRING, s.iterator.source[s.iterator.start+1:s.iterator.current-1])
+	s.addToken(STRING, value)
 	return nil
 }
 

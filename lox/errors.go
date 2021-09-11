@@ -12,7 +12,13 @@ const (
 	// UnhandledTokenCode error
 	UnhandledTokenCode = "UnhandledToken"
 	// UnclosedParenthesisCode error
-	UnclosedParenthesisCode = "unclosed parenthesis"
+	UnclosedParenthesisCode = "UnclosedParenthesis"
+	// ExpectedSemicolonCode error
+	ExpectedSemicolonCode = "ExpectedSemicolon"
+	// ExpectedIdentifierCode error
+	ExpectedIdentifierCode = "ExpectedIdentifier"
+	// ExpectedAssignmentCode error
+	ExpectedAssignmentCode = "ExpectedAssignment"
 
 	// ErrInvalidDataTypeCode error
 	ErrInvalidDataTypeCode = "InvalidDataType"
@@ -20,6 +26,10 @@ const (
 	ErrInvalidOperationCode = "InvalidOperation"
 	// ErrDivisionByZeroCode error
 	ErrDivisionByZeroCode = "DivisionByZero"
+	// ErrUndefinedVariableCode error
+	ErrUndefinedVariableCode = "UndefinedVariable"
+	// ErrInvalidTargetCode error
+	ErrInvalidTargetCode = "InvalidTarget"
 )
 
 // Error representation
@@ -96,6 +106,42 @@ func UnclosedParenthesisError(t *Token) *SyntaxError {
 	}
 }
 
+// ExpectedSemicolonError error
+func ExpectedSemicolonError(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "expected semicolon",
+			code:        ExpectedSemicolonCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// ExpectedIdentifier error
+func ExpectedIdentifier(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "expected identifier",
+			code:        ExpectedIdentifierCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// ExpectedAssignmentError error
+func ExpectedAssignmentError(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "expected assignment",
+			code:        ExpectedAssignmentCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
 // RuntimeError representation
 type RuntimeError struct {
 	err Error
@@ -135,6 +181,30 @@ func DivisionByZeroError(t *Token) *RuntimeError {
 		Error{
 			description: "division by zero is not supported",
 			code:        ErrDivisionByZeroCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// UndefinedVariable raises when an undefined variable is called
+func UndefinedVariable(name string, t *Token) *RuntimeError {
+	return &RuntimeError{
+		Error{
+			description: fmt.Sprintf("undefined variable '%s'", name),
+			code:        ErrUndefinedVariableCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// InvalidTarget raises when an assignment bad targeted
+func InvalidTarget(t *Token) *RuntimeError {
+	return &RuntimeError{
+		Error{
+			description: "invalid assignment target",
+			code:        ErrInvalidTargetCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

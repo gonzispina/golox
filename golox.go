@@ -84,17 +84,21 @@ func run(b []byte) error {
 		return nil
 	}
 
-	e, err := lox.NewParser(tokens).Parse()
-	if err != nil {
+	parser := lox.NewParser(tokens)
+	e, errs := parser.Parse()
+	if len(errs) > 0 {
+		for _, err := range errs {
+			fmt.Println(err)
+		}
+
 		return err
 	}
 
-	value, err := lox.NewInterpreter().Interpret(e)
+	err = lox.NewInterpreter().Interpret(e)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
-
-	fmt.Println(value)
 
 	return nil
 }

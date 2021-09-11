@@ -8,11 +8,19 @@ import (
 )
 
 func main() {
-	definitions := map[string]string{
+	expressions := map[string]string{
+		"Assign":   "name *Token, value Expression",
 		"Binary":   "left Expression, operator *Token, right Expression",
 		"Grouping": "expression Expression",
 		"Literal":  "value interface{}",
 		"Unary":    "operator *Token, right Expression",
+		"Variable": "token *Token",
+	}
+
+	statements := map[string]string{
+		"ExpressionStmt": "expression Expression",
+		"PrintStmt":      "expression Expression",
+		"VarStmt":        "token *Token, initializer Expression",
 	}
 
 	dir, _ := os.Getwd()
@@ -24,20 +32,30 @@ func main() {
 	}
 
 	f.WriteString("package lox\n\n")
-	f.WriteString("// Expression representation\n")
-	f.WriteString("type Expression interface {\n")
-	f.WriteString("	Accept(v ExpressionVisitor) (interface{}, error)\n")
+	define("Expression", expressions, f)
+	define("Stmt", statements, f)
+
+	if err := f.Close(); err != nil {
+		fmt.Printf("Error closing the file: %s", err.Error())
+		os.Exit(64)
+	}
+}
+
+func define(iface string, types map[string]string, f *os.File) {
+	f.WriteString(fmt.Sprintf("// %s representation\n", iface))
+	f.WriteString(fmt.Sprintf("type %s interface {\n", iface))
+	f.WriteString(fmt.Sprintf("	Accept(v %sVisitor) (interface{}, error)\n", iface))
 	f.WriteString("}\n\n")
 
-	f.WriteString("// ExpressionVisitor defines the visit method of every Expression\n")
-	f.WriteString("type ExpressionVisitor interface {\n")
-	for name, _ := range definitions {
+	f.WriteString(fmt.Sprintf("// %sVisitor defines the visit method of every %s\n", iface, iface))
+	f.WriteString(fmt.Sprintf("type %sVisitor interface {\n", iface))
+	for name, _ := range types {
 		f.WriteString(fmt.Sprintf("	visit%s(e *%s) (interface{}, error)\n", name, name))
 	}
 	f.WriteString("}\n\n")
 
-	for name, value := range definitions {
-		f.WriteString(fmt.Sprintf("// New%s Expression constructor\n", name))
+	for name, value := range types {
+		f.WriteString(fmt.Sprintf("// New%s %s constructor\n", name, iface))
 		f.WriteString(fmt.Sprintf("func New%s(%s) *%s {\n", name, value, name))
 		f.WriteString(fmt.Sprintf("	return &%s{\n", name))
 		for _, line := range strings.Split(value, ", ") {
@@ -47,20 +65,15 @@ func main() {
 		f.WriteString("	}\n")
 		f.WriteString("}\n\n")
 
-		f.WriteString(fmt.Sprintf("// %s Expression implementation\n", name))
+		f.WriteString(fmt.Sprintf("// %s %s implementation\n", name, iface))
 		f.WriteString(fmt.Sprintf("type %s struct {\n", name))
 		for _, line := range strings.Split(value, ", ") {
 			f.WriteString("	" + line + "\n")
 		}
 		f.WriteString("}\n\n")
 		f.WriteString("// Accept method of the visitor pattern it calls the proper visit method\n")
-		f.WriteString(fmt.Sprintf("func(e *%s) Accept(v ExpressionVisitor) (interface{}, error) {\n", name))
+		f.WriteString(fmt.Sprintf("func(e *%s) Accept(v %sVisitor) (interface{}, error) {\n", name, iface))
 		f.WriteString(fmt.Sprintf("	return v.visit%s(e)\n", name))
 		f.WriteString("}\n\n")
-	}
-
-	if err := f.Close(); err != nil {
-		fmt.Printf("Error closing the file: %s", err.Error())
-		os.Exit(64)
 	}
 }

@@ -18,6 +18,16 @@ func report(line int, where, message string) {
 	fmt.Printf("[line %v] Error %s: %s", line, where, message)
 }
 
+func isTruthy(v interface{}) bool {
+	if v == nil {
+		return false
+	}
+	if b, ok := v.(bool); ok {
+		return b
+	}
+	return true
+}
+
 func cast2String(value interface{}, t *Token) (string, error) {
 	v, ok := value.(string)
 	if !ok {

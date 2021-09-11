@@ -13,6 +13,14 @@ func NewASTPrinter() *ASTPrinter {
 type ASTPrinter struct {
 }
 
+func (p *ASTPrinter) visitAssign(e *Assign) (interface{}, error) {
+	panic("implement me")
+}
+
+func (p *ASTPrinter) visitVariable(e *Variable) (interface{}, error) {
+	panic("implement me")
+}
+
 // Print the given expression
 func (p *ASTPrinter) Print(e Expression) (string, error) {
 	v, err := e.Accept(p)
