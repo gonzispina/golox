@@ -17,6 +17,8 @@ const (
 	ExpectedSemicolonCode = "ExpectedSemicolon"
 	// ExpectedIdentifierCode error
 	ExpectedIdentifierCode = "ExpectedIdentifier"
+	// ExpectedOpeningBraceCode error
+	ExpectedOpeningBraceCode = "ExpectedOpeningBrace"
 	// ExpectedEndingBraceCode error
 	ExpectedEndingBraceCode = "ExpectedEndingBrace"
 
@@ -124,6 +126,18 @@ func ExpectedIdentifier(t *Token) *SyntaxError {
 		Error{
 			description: "expected identifier",
 			code:        ExpectedIdentifierCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// ExpectedOpeningBrace error
+func ExpectedOpeningBrace(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "expected opening brace",
+			code:        ExpectedOpeningBraceCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

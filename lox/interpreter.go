@@ -158,6 +158,25 @@ func (i *Interpreter) visitAssign(e *Assign) (interface{}, error) {
 	return nil, nil
 }
 
+func (i *Interpreter) visitLogical(e *Logical) (interface{}, error) {
+	v, err := i.evaluate(e.left)
+	if err != nil {
+		return nil, err
+	}
+
+	if e.operator.Is(OR) {
+		if isTruthy(v) {
+			return v, nil
+		}
+	} else {
+		if !isTruthy(v) {
+			return v, nil
+		}
+	}
+
+	return i.evaluate(e.right)
+}
+
 func (i *Interpreter) visitPrintStmt(s *PrintStmt) (interface{}, error) {
 	value, err := i.evaluate(s.expression)
 	if err != nil {
@@ -198,6 +217,23 @@ func (i *Interpreter) visitBlockStmt(e *BlockStmt) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	return nil, nil
+}
+
+func (i *Interpreter) visitIfStmt(e *IfStmt) (interface{}, error) {
+	v, err := i.evaluate(e.expression)
+	if err != nil {
+		return nil, err
+	}
+
+	if isTruthy(v) {
+		return i.execute(e.thenBranch)
+	}
+
+	if e.elseBranch != nil {
+		return i.execute(e.elseBranch)
 	}
 
 	return nil, nil

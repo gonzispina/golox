@@ -192,7 +192,14 @@ func (s *Scanner) identifier() {
 		token = IDENTIFIER
 	}
 
-	s.addTokenByType(token)
+	var literal interface{}
+	if token == TRUE {
+		literal = true
+	} else if token == FALSE {
+		literal = false
+	}
+
+	s.addToken(token, literal)
 }
 
 func (s *Scanner) string() error {

@@ -11,6 +11,7 @@ func main() {
 	expressions := map[string]string{
 		"Assign":   "name *Token, value Expression",
 		"Binary":   "left Expression, operator *Token, right Expression",
+		"Logical":  "left Expression, operator *Token, right Expression",
 		"Grouping": "expression Expression",
 		"Literal":  "value interface{}",
 		"Unary":    "operator *Token, right Expression",
@@ -19,6 +20,7 @@ func main() {
 
 	statements := map[string]string{
 		"ExpressionStmt": "expression Expression",
+		"IfStmt":         "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
 		"PrintStmt":      "expression Expression",
 		"VarStmt":        "token *Token, initializer Expression",
 		"BlockStmt":      "statements []Stmt",

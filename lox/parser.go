@@ -104,12 +104,17 @@ func (p *Parser) declaration() (Stmt, error) {
 	return NewVarStmt(identifier, initializer), nil
 }
 
-// statement → exprStmt | printStmt | block ;
+// statement → exprStmt | ifStmt | printStmt | block ;
 // exprStmt → expression ";" ;
+// ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
 // printStmt → "print" expression ";"
 // block → "{" declaration* "}" ;
 func (p *Parser) statement() (Stmt, error) {
-	if p.current().Is(PRINT) {
+	if p.match(IF) {
+		return p.ifStatement()
+	}
+
+	if p.match(PRINT) {
 		return p.printStatement()
 	}
 
@@ -120,9 +125,37 @@ func (p *Parser) statement() (Stmt, error) {
 	return p.expressionStatement()
 }
 
-func (p *Parser) printStatement() (*PrintStmt, error) {
-	p.advance()
+func (p *Parser) ifStatement() (*IfStmt, error) {
+	expression, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
 
+	if !p.match(LEFT_BRACE) {
+		return nil, ExpectedOpeningBrace(p.current())
+	}
+
+	thenBranch, err := p.blockStatement()
+	if err != nil {
+		return nil, err
+	}
+
+	var elseBranch *BlockStmt
+	if p.match(ELSE) {
+		if !p.match(LEFT_BRACE) {
+			return nil, ExpectedOpeningBrace(p.current())
+		}
+
+		elseBranch, err = p.blockStatement()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewIfStmt(expression, thenBranch, elseBranch), nil
+}
+
+func (p *Parser) printStatement() (*PrintStmt, error) {
 	e, err := p.expression()
 	if err != nil {
 		return nil, err
@@ -171,9 +204,9 @@ func (p *Parser) expression() (Expression, error) {
 	return p.assignment()
 }
 
-// assignment → IDENTIFIER "=" assignment | equality ;
+// assignment → IDENTIFIER "=" assignment | logic_or ;
 func (p *Parser) assignment() (Expression, error) {
-	e, err := p.equality()
+	e, err := p.or()
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +227,44 @@ func (p *Parser) assignment() (Expression, error) {
 	}
 
 	return NewAssign(variable.token, value), nil
+}
+
+// or → and ( "or" and )* ;
+func (p *Parser) or() (Expression, error) {
+	e, err := p.and()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.match(OR) {
+		operator := p.previous()
+		right, err := p.and()
+		if err != nil {
+			return nil, err
+		}
+		e = NewLogical(e, operator, right)
+	}
+
+	return e, nil
+}
+
+// and → equality ( "and" equality )* ;
+func (p *Parser) and() (Expression, error) {
+	e, err := p.equality()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.match(AND) {
+		operator := p.previous()
+		right, err := p.equality()
+		if err != nil {
+			return nil, err
+		}
+		e = NewLogical(e, operator, right)
+	}
+
+	return e, nil
 }
 
 // equality → comparison ( ( "!=" | "==" ) comparison )* ;

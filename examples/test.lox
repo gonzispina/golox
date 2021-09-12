@@ -1,36 +1,7 @@
-/*
-fun noop() {
-    return nil
-}
-
-
-fun getFloat() {
-    var s = nil
-    s = 123.456
-    return s
-}
-
-func number (s) {
-    if s == "" || s == nil {
-        return false
-    }
-
-    if s == "asdasd" && s != nil {
-        return true
-    }
-
-    return !s
-}
-*/
-
-var b = (127 + 73) / 2;
-
-{
-    var b = b + 1;
+var b = 1235.99;
+if !false  {
     print b;
+} else {
+    print "hola gonza";
 }
-
-b;
-
-print b;
 
