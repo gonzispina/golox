@@ -7,13 +7,32 @@ type Expression interface {
 
 // ExpressionVisitor defines the visit method of every Expression
 type ExpressionVisitor interface {
+	visitAssign(e *Assign) (interface{}, error)
+	visitBinary(e *Binary) (interface{}, error)
+	visitLogical(e *Logical) (interface{}, error)
 	visitGrouping(e *Grouping) (interface{}, error)
 	visitLiteral(e *Literal) (interface{}, error)
 	visitUnary(e *Unary) (interface{}, error)
 	visitVariable(e *Variable) (interface{}, error)
-	visitAssign(e *Assign) (interface{}, error)
-	visitBinary(e *Binary) (interface{}, error)
-	visitLogical(e *Logical) (interface{}, error)
+}
+
+// NewAssign Expression constructor
+func NewAssign(name *Token, value Expression) *Assign {
+	return &Assign{
+		name: name,
+		value: value,
+	}
+}
+
+// Assign Expression implementation
+type Assign struct {
+	name *Token
+	value Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Assign) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitAssign(e)
 }
 
 // NewBinary Expression constructor
@@ -128,25 +147,6 @@ func(e *Variable) Accept(v ExpressionVisitor) (interface{}, error) {
 	return v.visitVariable(e)
 }
 
-// NewAssign Expression constructor
-func NewAssign(name *Token, value Expression) *Assign {
-	return &Assign{
-		name: name,
-		value: value,
-	}
-}
-
-// Assign Expression implementation
-type Assign struct {
-	name *Token
-	value Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Assign) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitAssign(e)
-}
-
 // Stmt representation
 type Stmt interface {
 	Accept(v StmtVisitor) (interface{}, error)
@@ -156,8 +156,11 @@ type Stmt interface {
 type StmtVisitor interface {
 	visitVarStmt(e *VarStmt) (interface{}, error)
 	visitBlockStmt(e *BlockStmt) (interface{}, error)
+	visitBreakStmt(e *BreakStmt) (interface{}, error)
+	visitContinueStmt(e *ContinueStmt) (interface{}, error)
 	visitExpressionStmt(e *ExpressionStmt) (interface{}, error)
 	visitIfStmt(e *IfStmt) (interface{}, error)
+	visitForStmt(e *ForStmt) (interface{}, error)
 	visitPrintStmt(e *PrintStmt) (interface{}, error)
 }
 
@@ -197,6 +200,33 @@ type IfStmt struct {
 // Accept method of the visitor pattern it calls the proper visit method
 func(e *IfStmt) Accept(v StmtVisitor) (interface{}, error) {
 	return v.visitIfStmt(e)
+}
+
+// NewForStmt Stmt constructor
+func NewForStmt(initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *BreakStmt, cont *ContinueStmt) *ForStmt {
+	return &ForStmt{
+		initializer: initializer,
+		condition: condition,
+		increment: increment,
+		body: body,
+		br: br,
+		cont: cont,
+	}
+}
+
+// ForStmt Stmt implementation
+type ForStmt struct {
+	initializer Stmt
+	condition Expression
+	increment Expression
+	body *BlockStmt
+	br *BreakStmt
+	cont *ContinueStmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *ForStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitForStmt(e)
 }
 
 // NewPrintStmt Stmt constructor
@@ -250,5 +280,39 @@ type BlockStmt struct {
 // Accept method of the visitor pattern it calls the proper visit method
 func(e *BlockStmt) Accept(v StmtVisitor) (interface{}, error) {
 	return v.visitBlockStmt(e)
+}
+
+// NewBreakStmt Stmt constructor
+func NewBreakStmt(value bool) *BreakStmt {
+	return &BreakStmt{
+		value: value,
+	}
+}
+
+// BreakStmt Stmt implementation
+type BreakStmt struct {
+	value bool
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *BreakStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitBreakStmt(e)
+}
+
+// NewContinueStmt Stmt constructor
+func NewContinueStmt(value bool) *ContinueStmt {
+	return &ContinueStmt{
+		value: value,
+	}
+}
+
+// ContinueStmt Stmt implementation
+type ContinueStmt struct {
+	value bool
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *ContinueStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitContinueStmt(e)
 }
 

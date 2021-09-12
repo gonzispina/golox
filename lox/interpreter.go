@@ -238,3 +238,68 @@ func (i *Interpreter) visitIfStmt(e *IfStmt) (interface{}, error) {
 
 	return nil, nil
 }
+
+func (i *Interpreter) visitForStmt(e *ForStmt) (interface{}, error) {
+	prev := *i.environment
+	defer func() {
+		e.cont.value = false
+		e.br.value = false
+		i.environment = &prev
+	}()
+
+	i.environment = NewEnvironment(i.environment)
+	if e.initializer != nil {
+		_, err := i.execute(e.initializer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for {
+		if e.condition != nil {
+			v, err := i.evaluate(e.condition)
+			if err != nil {
+				return nil, err
+			}
+
+			if !isTruthy(v) {
+				break
+			}
+		}
+
+		for _, stmt := range e.body.statements {
+			_, err := i.execute(stmt)
+			if err != nil {
+				return nil, err
+			}
+
+			if e.cont.value {
+				e.cont.value = false
+				break
+			}
+
+			if e.br.value {
+				return nil, nil
+			}
+		}
+
+		if e.increment != nil {
+			_, err := i.evaluate(e.increment)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+func (i *Interpreter) visitBreakStmt(e *BreakStmt) (interface{}, error) {
+	e.value = true
+	return nil, nil
+}
+
+func (i *Interpreter) visitContinueStmt(e *ContinueStmt) (interface{}, error) {
+	e.value = true
+	return nil, nil
+}

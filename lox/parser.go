@@ -46,7 +46,7 @@ func (p *Parser) Parse() ([]Stmt, []error) {
 	var s []Stmt
 	var errs []error
 	for !p.isAtEnd() {
-		statement, err := p.declaration()
+		statement, err := p.declaration(nil, nil)
 		if err != nil {
 			errs = append(errs, err)
 			p.synchronize()
@@ -67,8 +67,8 @@ func (p *Parser) synchronize() {
 		if p.advance().OneOf(
 			CLASS, FUN,
 			VAR, FOR,
-			IF, WHILE,
 			PRINT, RETURN,
+			IF,
 		) {
 			break
 		}
@@ -76,9 +76,9 @@ func (p *Parser) synchronize() {
 }
 
 // declaration → "var" IDENTIFIER ( "=" expression )? ";" ;
-func (p *Parser) declaration() (Stmt, error) {
+func (p *Parser) declaration(br *BreakStmt, cont *ContinueStmt) (Stmt, error) {
 	if !p.match(VAR) {
-		return p.statement()
+		return p.statement(br, cont)
 	}
 
 	if !p.match(IDENTIFIER) {
@@ -104,14 +104,19 @@ func (p *Parser) declaration() (Stmt, error) {
 	return NewVarStmt(identifier, initializer), nil
 }
 
-// statement → exprStmt | ifStmt | printStmt | block ;
+// statement → exprStmt | forStmt | ifStmt | printStmt | block ;
 // exprStmt → expression ";" ;
+// forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 // ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
 // printStmt → "print" expression ";"
 // block → "{" declaration* "}" ;
-func (p *Parser) statement() (Stmt, error) {
+func (p *Parser) statement(br *BreakStmt, cont *ContinueStmt) (Stmt, error) {
+	if p.match(FOR) {
+		return p.forStatement()
+	}
+
 	if p.match(IF) {
-		return p.ifStatement()
+		return p.ifStatement(br, cont)
 	}
 
 	if p.match(PRINT) {
@@ -119,13 +124,76 @@ func (p *Parser) statement() (Stmt, error) {
 	}
 
 	if p.match(LEFT_BRACE) {
-		return p.blockStatement()
+		return p.blockStatement(br, cont)
 	}
 
 	return p.expressionStatement()
 }
 
-func (p *Parser) ifStatement() (*IfStmt, error) {
+func (p *Parser) forStatement() (*ForStmt, error) {
+	var err error
+
+	cont := NewContinueStmt(false)
+	br := NewBreakStmt(false)
+
+	if p.match(LEFT_BRACE) {
+		body, err := p.blockStatement(br, cont)
+		if err != nil {
+			return nil, err
+		}
+		return NewForStmt(nil, nil, nil, body, br, cont), nil
+	}
+
+	var initializer Stmt
+	if p.current().Is(VAR) {
+		initializer, err = p.declaration(br, cont)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if p.match(LEFT_BRACE) {
+		body, err := p.blockStatement(br, cont)
+		if err != nil {
+			return nil, err
+		}
+		return NewForStmt(initializer, nil, nil, body, br, cont), nil
+	}
+
+	var conditional Expression
+	var increment Expression
+	if p.match(SEMICOLON) {
+		increment, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		conditional, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		if p.match(SEMICOLON) {
+			increment, err = p.expression()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if !p.match(LEFT_BRACE) {
+		return nil, ExpectedOpeningBrace(p.current())
+	}
+
+	body, err := p.blockStatement(br, cont)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewForStmt(initializer, conditional, increment, body, br, cont), nil
+}
+
+func (p *Parser) ifStatement(br *BreakStmt, cont *ContinueStmt) (*IfStmt, error) {
 	expression, err := p.expression()
 	if err != nil {
 		return nil, err
@@ -135,7 +203,7 @@ func (p *Parser) ifStatement() (*IfStmt, error) {
 		return nil, ExpectedOpeningBrace(p.current())
 	}
 
-	thenBranch, err := p.blockStatement()
+	thenBranch, err := p.blockStatement(br, cont)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +214,7 @@ func (p *Parser) ifStatement() (*IfStmt, error) {
 			return nil, ExpectedOpeningBrace(p.current())
 		}
 
-		elseBranch, err = p.blockStatement()
+		elseBranch, err = p.blockStatement(br, cont)
 		if err != nil {
 			return nil, err
 		}
@@ -181,14 +249,37 @@ func (p *Parser) expressionStatement() (*ExpressionStmt, error) {
 	return NewExpressionStmt(e), nil
 }
 
-func (p *Parser) blockStatement() (*BlockStmt, error) {
+func (p *Parser) blockStatement(br *BreakStmt, cont *ContinueStmt) (*BlockStmt, error) {
 	var s []Stmt
 
 	for !p.isAtEnd() && !p.current().Is(RIGHT_BRACE) {
-		statement, err := p.declaration()
-		if err != nil {
-			return nil, err
+		var statement Stmt
+		var err error
+		if p.match(BREAK) {
+			if br == nil {
+				return nil, BreakStatementOutsideLoop(p.previous())
+			}
+
+			statement = br
+			if !p.match(SEMICOLON) {
+				return nil, ExpectedSemicolonError(p.current())
+			}
+		} else if p.match(CONTINUE) {
+			if cont == nil {
+				return nil, ContinueStatementOutsideLoop(p.previous())
+			}
+
+			statement = cont
+			if !p.match(SEMICOLON) {
+				return nil, ExpectedSemicolonError(p.current())
+			}
+		} else {
+			statement, err = p.declaration(br, cont)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		s = append(s, statement)
 	}
 

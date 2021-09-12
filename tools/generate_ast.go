@@ -21,9 +21,12 @@ func main() {
 	statements := map[string]string{
 		"ExpressionStmt": "expression Expression",
 		"IfStmt":         "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
+		"ForStmt":        "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *BreakStmt, cont *ContinueStmt",
 		"PrintStmt":      "expression Expression",
 		"VarStmt":        "token *Token, initializer Expression",
 		"BlockStmt":      "statements []Stmt",
+		"BreakStmt":      "value bool",
+		"ContinueStmt":   "value bool",
 	}
 
 	dir, _ := os.Getwd()

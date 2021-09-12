@@ -21,6 +21,10 @@ const (
 	ExpectedOpeningBraceCode = "ExpectedOpeningBrace"
 	// ExpectedEndingBraceCode error
 	ExpectedEndingBraceCode = "ExpectedEndingBrace"
+	// BreakStatementOutsideLoopCode error
+	BreakStatementOutsideLoopCode = "BreakStatementOutsideLoop"
+	// ContinueStatementOutsideLoopCode error
+	ContinueStatementOutsideLoopCode = "ContinueStatementOutsideLoop"
 
 	// ErrInvalidDataTypeCode error
 	ErrInvalidDataTypeCode = "InvalidDataType"
@@ -150,6 +154,30 @@ func ExpectedEndingBrace(t *Token) *SyntaxError {
 		Error{
 			description: "expected ending brace",
 			code:        ExpectedEndingBraceCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// BreakStatementOutsideLoop error
+func BreakStatementOutsideLoop(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "break statements must be inside a for block",
+			code:        BreakStatementOutsideLoopCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// ContinueStatementOutsideLoop error
+func ContinueStatementOutsideLoop(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "continue statements must be inside a for block",
+			code:        ContinueStatementOutsideLoopCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

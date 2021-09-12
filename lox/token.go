@@ -38,41 +38,43 @@ const (
 
 	// Keywords.
 
-	AND    TokenType = "&&"
-	OR     TokenType = "||"
-	CLASS  TokenType = "class"
-	IF     TokenType = "if"
-	ELSE   TokenType = "else"
-	FALSE  TokenType = "false"
-	TRUE   TokenType = "true"
-	FUN    TokenType = "fun"
-	WHILE  TokenType = "while"
-	FOR    TokenType = "for"
-	PRINT  TokenType = "print"
-	RETURN TokenType = "return"
-	SUPER  TokenType = "super"
-	THIS   TokenType = "this"
-	NIL    TokenType = "nil"
-	VAR    TokenType = "var"
+	AND      TokenType = "&&"
+	OR       TokenType = "||"
+	CLASS    TokenType = "class"
+	IF       TokenType = "if"
+	ELSE     TokenType = "else"
+	FALSE    TokenType = "false"
+	TRUE     TokenType = "true"
+	FUN      TokenType = "fun"
+	FOR      TokenType = "for"
+	BREAK    TokenType = "break"
+	CONTINUE TokenType = "continue"
+	PRINT    TokenType = "print"
+	RETURN   TokenType = "return"
+	SUPER    TokenType = "super"
+	THIS     TokenType = "this"
+	NIL      TokenType = "nil"
+	VAR      TokenType = "var"
 
 	EOF TokenType = "eof"
 )
 
 var Reserved = map[string]TokenType{
-	"class":  CLASS,
-	"else":   ELSE,
-	"false":  FALSE,
-	"for":    FOR,
-	"fun":    FUN,
-	"if":     IF,
-	"nil":    NIL,
-	"print":  PRINT,
-	"return": RETURN,
-	"super":  SUPER,
-	"this":   THIS,
-	"true":   TRUE,
-	"var":    VAR,
-	"while":  WHILE,
+	"class":    CLASS,
+	"else":     ELSE,
+	"false":    FALSE,
+	"for":      FOR,
+	"break":    BREAK,
+	"continue": CONTINUE,
+	"fun":      FUN,
+	"if":       IF,
+	"nil":      NIL,
+	"print":    PRINT,
+	"return":   RETURN,
+	"super":    SUPER,
+	"this":     THIS,
+	"true":     TRUE,
+	"var":      VAR,
 }
 
 // NewToken constructor
