@@ -23,9 +23,14 @@ func number (s) {
 }
 */
 
-var a = "hola Gonza";
 var b = (127 + 73) / 2;
 
+{
+    var b = b + 1;
+    print b;
+}
+
+b;
+
 print b;
-print a;
 

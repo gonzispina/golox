@@ -17,8 +17,8 @@ const (
 	ExpectedSemicolonCode = "ExpectedSemicolon"
 	// ExpectedIdentifierCode error
 	ExpectedIdentifierCode = "ExpectedIdentifier"
-	// ExpectedAssignmentCode error
-	ExpectedAssignmentCode = "ExpectedAssignment"
+	// ExpectedEndingBraceCode error
+	ExpectedEndingBraceCode = "ExpectedEndingBrace"
 
 	// ErrInvalidDataTypeCode error
 	ErrInvalidDataTypeCode = "InvalidDataType"
@@ -130,12 +130,12 @@ func ExpectedIdentifier(t *Token) *SyntaxError {
 	}
 }
 
-// ExpectedAssignmentError error
-func ExpectedAssignmentError(t *Token) *SyntaxError {
+// ExpectedEndingBrace error
+func ExpectedEndingBrace(t *Token) *SyntaxError {
 	return &SyntaxError{
 		Error{
-			description: "expected assignment",
-			code:        ExpectedAssignmentCode,
+			description: "expected ending brace",
+			code:        ExpectedEndingBraceCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

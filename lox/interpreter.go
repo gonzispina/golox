@@ -6,7 +6,7 @@ import (
 
 // NewInterpreter constructor
 func NewInterpreter() *Interpreter {
-	e := NewEnvironment()
+	e := NewEnvironment(nil)
 	return &Interpreter{environment: e}
 }
 
@@ -18,9 +18,12 @@ type Interpreter struct {
 // Interpret the given expression
 func (i *Interpreter) Interpret(s []Stmt) error {
 	for _, stmt := range s {
-		_, err := i.execute(stmt)
+		v, err := i.execute(stmt)
 		if err != nil {
 			return err
+		}
+		if v != nil {
+			fmt.Printf("%v\n", v)
 		}
 	}
 	return nil
@@ -140,6 +143,21 @@ func (i *Interpreter) visitVariable(e *Variable) (interface{}, error) {
 	return v, nil
 }
 
+// assignment → IDENTIFIER "=" assignment | equality ;
+func (i *Interpreter) visitAssign(e *Assign) (interface{}, error) {
+	value, err := i.evaluate(e.value)
+	if err != nil {
+		return nil, err
+	}
+
+	ok := i.environment.assign(e.name.lexeme, value)
+	if !ok {
+		return nil, UndefinedVariable(e.name.lexeme, e.name)
+	}
+
+	return nil, nil
+}
+
 func (i *Interpreter) visitPrintStmt(s *PrintStmt) (interface{}, error) {
 	value, err := i.evaluate(s.expression)
 	if err != nil {
@@ -168,16 +186,18 @@ func (i *Interpreter) visitVarStmt(e *VarStmt) (interface{}, error) {
 	return nil, nil
 }
 
-// assignment → IDENTIFIER "=" assignment | equality ;
-func (i *Interpreter) visitAssign(e *Assign) (interface{}, error) {
-	value, err := i.evaluate(e.value)
-	if err != nil {
-		return nil, err
-	}
+func (i *Interpreter) visitBlockStmt(e *BlockStmt) (interface{}, error) {
+	prev := *i.environment
+	defer func() {
+		i.environment = &prev
+	}()
 
-	ok := i.environment.assign(e.name.lexeme, value)
-	if !ok {
-		return nil, UndefinedVariable(e.name.lexeme, e.name)
+	i.environment = NewEnvironment(i.environment)
+	for _, statement := range e.statements {
+		_, err := i.execute(statement)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil

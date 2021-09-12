@@ -104,13 +104,19 @@ func (p *Parser) declaration() (Stmt, error) {
 	return NewVarStmt(identifier, initializer), nil
 }
 
-// statement → exprStmt | printStmt ;
+// statement → exprStmt | printStmt | block ;
 // exprStmt → expression ";" ;
 // printStmt → "print" expression ";"
+// block → "{" declaration* "}" ;
 func (p *Parser) statement() (Stmt, error) {
 	if p.current().Is(PRINT) {
 		return p.printStatement()
 	}
+
+	if p.match(LEFT_BRACE) {
+		return p.blockStatement()
+	}
+
 	return p.expressionStatement()
 }
 
@@ -140,6 +146,24 @@ func (p *Parser) expressionStatement() (*ExpressionStmt, error) {
 	}
 
 	return NewExpressionStmt(e), nil
+}
+
+func (p *Parser) blockStatement() (*BlockStmt, error) {
+	var s []Stmt
+
+	for !p.isAtEnd() && !p.current().Is(RIGHT_BRACE) {
+		statement, err := p.declaration()
+		if err != nil {
+			return nil, err
+		}
+		s = append(s, statement)
+	}
+
+	if !p.match(RIGHT_BRACE) {
+		return nil, ExpectedEndingBrace(p.current())
+	}
+
+	return NewBlockStmt(s), nil
 }
 
 // expression → assignment

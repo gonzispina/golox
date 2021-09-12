@@ -21,6 +21,7 @@ func main() {
 		"ExpressionStmt": "expression Expression",
 		"PrintStmt":      "expression Expression",
 		"VarStmt":        "token *Token, initializer Expression",
+		"BlockStmt":      "statements []Stmt",
 	}
 
 	dir, _ := os.Getwd()
