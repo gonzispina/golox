@@ -76,7 +76,7 @@ func (p *Parser) synchronize() {
 }
 
 // declaration → "var" IDENTIFIER ( "=" expression )? ";" ;
-func (p *Parser) declaration(br *BreakStmt, cont *ContinueStmt) (Stmt, error) {
+func (p *Parser) declaration(br *CircuitBreakStmt, cont *CircuitBreakStmt) (Stmt, error) {
 	if !p.match(VAR) {
 		return p.statement(br, cont)
 	}
@@ -110,7 +110,7 @@ func (p *Parser) declaration(br *BreakStmt, cont *ContinueStmt) (Stmt, error) {
 // ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
 // printStmt → "print" expression ";"
 // block → "{" declaration* "}" ;
-func (p *Parser) statement(br *BreakStmt, cont *ContinueStmt) (Stmt, error) {
+func (p *Parser) statement(br *CircuitBreakStmt, cont *CircuitBreakStmt) (Stmt, error) {
 	if p.match(FOR) {
 		return p.forStatement()
 	}
@@ -133,8 +133,8 @@ func (p *Parser) statement(br *BreakStmt, cont *ContinueStmt) (Stmt, error) {
 func (p *Parser) forStatement() (*ForStmt, error) {
 	var err error
 
-	cont := NewContinueStmt(false)
-	br := NewBreakStmt(false)
+	cont := NewCircuitBreakStmt(false)
+	br := NewCircuitBreakStmt(false)
 
 	if p.match(LEFT_BRACE) {
 		body, err := p.blockStatement(br, cont)
@@ -193,7 +193,7 @@ func (p *Parser) forStatement() (*ForStmt, error) {
 	return NewForStmt(initializer, conditional, increment, body, br, cont), nil
 }
 
-func (p *Parser) ifStatement(br *BreakStmt, cont *ContinueStmt) (*IfStmt, error) {
+func (p *Parser) ifStatement(br *CircuitBreakStmt, cont *CircuitBreakStmt) (*IfStmt, error) {
 	expression, err := p.expression()
 	if err != nil {
 		return nil, err
@@ -249,7 +249,7 @@ func (p *Parser) expressionStatement() (*ExpressionStmt, error) {
 	return NewExpressionStmt(e), nil
 }
 
-func (p *Parser) blockStatement(br *BreakStmt, cont *ContinueStmt) (*BlockStmt, error) {
+func (p *Parser) blockStatement(br *CircuitBreakStmt, cont *CircuitBreakStmt) (*BlockStmt, error) {
 	var s []Stmt
 
 	for !p.isAtEnd() && !p.current().Is(RIGHT_BRACE) {
@@ -434,7 +434,7 @@ func (p *Parser) factor() (Expression, error) {
 	return expression, nil
 }
 
-// unary → ( "!" | "-" ) unary | primary ;
+// unary → ( "!" | "-" ) unary | call ;
 func (p *Parser) unary() (Expression, error) {
 	if p.current().OneOf(BANG, MINUS) {
 		operator := p.advance()
@@ -446,7 +446,46 @@ func (p *Parser) unary() (Expression, error) {
 		return NewUnary(operator, right), nil
 	}
 
-	return p.primary()
+	return p.call()
+}
+
+// call → primary ( "(" arguments? ")" )* ;
+func (p *Parser) call() (Expression, error) {
+	e, err := p.primary()
+	if err != nil {
+		return nil, err
+	}
+
+	for p.match(LEFT_PAREN) {
+		var arguments []Expression
+		if p.match(RIGHT_PAREN) {
+			e = NewCall(e, p.current(), arguments)
+			continue
+		}
+
+		for {
+			if len(arguments) > 255 {
+				return nil, ArgumentLimitExceeded(p.previous())
+			}
+
+			arg, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+
+			arguments = append(arguments, arg)
+			if p.match(COMMA) {
+				continue
+			} else if p.match(RIGHT_PAREN) {
+				e = NewCall(e, p.current(), arguments)
+				break
+			} else {
+				return nil, BadFunctionSignature(p.current())
+			}
+		}
+	}
+
+	return e, nil
 }
 
 // primary → "true" | "false" | "nil" | NUMBER | STRING | "(" expression ")" | IDENTIFIER ;

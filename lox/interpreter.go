@@ -7,6 +7,7 @@ import (
 // NewInterpreter constructor
 func NewInterpreter() *Interpreter {
 	e := NewEnvironment(nil)
+	e.define("clock", NewClockFunction())
 	return &Interpreter{environment: e}
 }
 
@@ -177,6 +178,29 @@ func (i *Interpreter) visitLogical(e *Logical) (interface{}, error) {
 	return i.evaluate(e.right)
 }
 
+func (i *Interpreter) visitCall(e *Call) (interface{}, error) {
+	callee, err := i.evaluate(e.callee)
+	if err != nil {
+		return nil, err
+	}
+
+	var arguments []interface{}
+	for _, argument := range e.arguments {
+		v, err := i.evaluate(argument)
+		if err != nil {
+			return nil, err
+		}
+		arguments = append(arguments, v)
+	}
+
+	c, ok := callee.(Callable)
+	if !ok {
+		return nil, ExpressionIsNotCallable(e.paren)
+	}
+
+	return c.Call(i, e.paren, arguments)
+}
+
 func (i *Interpreter) visitPrintStmt(s *PrintStmt) (interface{}, error) {
 	value, err := i.evaluate(s.expression)
 	if err != nil {
@@ -294,12 +318,7 @@ func (i *Interpreter) visitForStmt(e *ForStmt) (interface{}, error) {
 	return nil, nil
 }
 
-func (i *Interpreter) visitBreakStmt(e *BreakStmt) (interface{}, error) {
-	e.value = true
-	return nil, nil
-}
-
-func (i *Interpreter) visitContinueStmt(e *ContinueStmt) (interface{}, error) {
+func (i *Interpreter) visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, error) {
 	e.value = true
 	return nil, nil
 }

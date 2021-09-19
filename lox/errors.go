@@ -2,40 +2,39 @@ package lox
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	// ErrUnexpectedTokenCode error
-	ErrUnexpectedTokenCode = "UnexpectedToken"
+	// UnexpectedTokenCode error
+	UnexpectedTokenCode = "UnexpectedToken"
 	// UnterminatedStringCode error
 	UnterminatedStringCode = "UnterminatedString"
 	// UnhandledTokenCode error
 	UnhandledTokenCode = "UnhandledToken"
 	// UnclosedParenthesisCode error
 	UnclosedParenthesisCode = "UnclosedParenthesis"
-	// ExpectedSemicolonCode error
-	ExpectedSemicolonCode = "ExpectedSemicolon"
 	// ExpectedIdentifierCode error
 	ExpectedIdentifierCode = "ExpectedIdentifier"
-	// ExpectedOpeningBraceCode error
-	ExpectedOpeningBraceCode = "ExpectedOpeningBrace"
-	// ExpectedEndingBraceCode error
-	ExpectedEndingBraceCode = "ExpectedEndingBrace"
 	// BreakStatementOutsideLoopCode error
 	BreakStatementOutsideLoopCode = "BreakStatementOutsideLoop"
 	// ContinueStatementOutsideLoopCode error
 	ContinueStatementOutsideLoopCode = "ContinueStatementOutsideLoop"
+	// ArgumentSizeExceededCode error
+	ArgumentSizeExceededCode = "ArgumentSizeExceeded"
+	// InvalidTargetCode error
+	InvalidTargetCode = "InvalidTarget"
 
-	// ErrInvalidDataTypeCode error
-	ErrInvalidDataTypeCode = "InvalidDataType"
-	// ErrInvalidOperationCode error
-	ErrInvalidOperationCode = "InvalidOperation"
-	// ErrDivisionByZeroCode error
-	ErrDivisionByZeroCode = "DivisionByZero"
-	// ErrUndefinedVariableCode error
-	ErrUndefinedVariableCode = "UndefinedVariable"
-	// ErrInvalidTargetCode error
-	ErrInvalidTargetCode = "InvalidTarget"
+	// InvalidDataTypeCode error
+	InvalidDataTypeCode = "InvalidDataType"
+	// InvalidOperationCode error
+	InvalidOperationCode = "InvalidOperation"
+	// DivisionByZeroCode error
+	DivisionByZeroCode = "DivisionByZero"
+	// UndefinedVariableCode error
+	UndefinedVariableCode = "UndefinedVariable"
+	// ExpressionIsNotCallableCode error
+	ExpressionIsNotCallableCode = "ExpressionIsNotCallable"
 )
 
 // Error representation
@@ -64,14 +63,41 @@ func (e *SyntaxError) Error() string {
 	return e.err.Error("SyntaxError")
 }
 
-// UnexpectedTokenError error
-func UnexpectedTokenError(t string, line, column int) *SyntaxError {
+// UnexpectedLexemeError error
+func UnexpectedLexemeError(t rune, line, column int) *SyntaxError {
 	return &SyntaxError{
 		Error{
-			description: fmt.Sprintf("unexpected token %s", t),
-			code:        ErrUnexpectedTokenCode,
+			description: fmt.Sprintf("unexpected token '%s'", string(t)),
+			code:        UnexpectedTokenCode,
 			line:        &line,
 			column:      &column,
+		},
+	}
+}
+
+func UnexpectedTokenError(unexpected *Token, expected ...TokenType) *SyntaxError {
+	description := fmt.Sprintf("unexpected token '%s'", unexpected.lexeme)
+
+	if len(expected) > 0 {
+		var es []string
+		for _, e := range expected[0 : len(expected)-1] {
+			es = append(es, string(e))
+		}
+
+		expectation := fmt.Sprintf("'%s'", strings.Join(es, "', '"))
+		if len(expected) > 1 {
+			expectation = fmt.Sprintf("%s or '%s'", expectation, expected[len(expected)-1])
+		}
+
+		description = fmt.Sprintf("%s. Expecting %s", description, expectation)
+	}
+
+	return &SyntaxError{
+		Error{
+			description: description,
+			code:        UnexpectedTokenCode,
+			line:        &unexpected.line,
+			column:      &unexpected.column,
 		},
 	}
 }
@@ -114,14 +140,7 @@ func UnclosedParenthesisError(t *Token) *SyntaxError {
 
 // ExpectedSemicolonError error
 func ExpectedSemicolonError(t *Token) *SyntaxError {
-	return &SyntaxError{
-		Error{
-			description: "expected semicolon",
-			code:        ExpectedSemicolonCode,
-			line:        &t.line,
-			column:      &t.column,
-		},
-	}
+	return UnexpectedTokenError(t, SEMICOLON)
 }
 
 // ExpectedIdentifier error
@@ -138,26 +157,12 @@ func ExpectedIdentifier(t *Token) *SyntaxError {
 
 // ExpectedOpeningBrace error
 func ExpectedOpeningBrace(t *Token) *SyntaxError {
-	return &SyntaxError{
-		Error{
-			description: "expected opening brace",
-			code:        ExpectedOpeningBraceCode,
-			line:        &t.line,
-			column:      &t.column,
-		},
-	}
+	return UnexpectedTokenError(t, LEFT_BRACE)
 }
 
 // ExpectedEndingBrace error
 func ExpectedEndingBrace(t *Token) *SyntaxError {
-	return &SyntaxError{
-		Error{
-			description: "expected ending brace",
-			code:        ExpectedEndingBraceCode,
-			line:        &t.line,
-			column:      &t.column,
-		},
-	}
+	return UnexpectedTokenError(t, RIGHT_BRACE)
 }
 
 // BreakStatementOutsideLoop error
@@ -184,6 +189,35 @@ func ContinueStatementOutsideLoop(t *Token) *SyntaxError {
 	}
 }
 
+// BadFunctionSignature error
+func BadFunctionSignature(t *Token) *SyntaxError {
+	return UnexpectedTokenError(t, COMMA, RIGHT_PAREN)
+}
+
+// ArgumentLimitExceeded error
+func ArgumentLimitExceeded(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "a function can't have more than 255 arguments",
+			code:        ArgumentSizeExceededCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// InvalidTarget raises when an assignment bad targeted
+func InvalidTarget(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "invalid assignment target",
+			code:        InvalidTargetCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
 // RuntimeError representation
 type RuntimeError struct {
 	err Error
@@ -198,7 +232,7 @@ func InvalidDataTypeError(t *Token, got dataType, expected dataType) *RuntimeErr
 	return &RuntimeError{
 		Error{
 			description: fmt.Sprintf("expected %s, got %s", expected, got),
-			code:        ErrInvalidDataTypeCode,
+			code:        InvalidDataTypeCode,
 			line:        &t.line,
 			column:      &t.column,
 		},
@@ -210,7 +244,7 @@ func InvalidOperationError(t *Token, left dataType, right dataType) *RuntimeErro
 	return &RuntimeError{
 		Error{
 			description: fmt.Sprintf("invalid operation between %s and %s", right, left),
-			code:        ErrInvalidOperationCode,
+			code:        InvalidOperationCode,
 			line:        &t.line,
 			column:      &t.column,
 		},
@@ -222,7 +256,7 @@ func DivisionByZeroError(t *Token) *RuntimeError {
 	return &RuntimeError{
 		Error{
 			description: "division by zero is not supported",
-			code:        ErrDivisionByZeroCode,
+			code:        DivisionByZeroCode,
 			line:        &t.line,
 			column:      &t.column,
 		},
@@ -234,19 +268,31 @@ func UndefinedVariable(name string, t *Token) *RuntimeError {
 	return &RuntimeError{
 		Error{
 			description: fmt.Sprintf("undefined variable '%s'", name),
-			code:        ErrUndefinedVariableCode,
+			code:        UndefinedVariableCode,
 			line:        &t.line,
 			column:      &t.column,
 		},
 	}
 }
 
-// InvalidTarget raises when an assignment bad targeted
-func InvalidTarget(t *Token) *RuntimeError {
+// ExpressionIsNotCallable raises when not callable expression is treated as a callable one
+func ExpressionIsNotCallable(t *Token) *RuntimeError {
 	return &RuntimeError{
 		Error{
-			description: "invalid assignment target",
-			code:        ErrInvalidTargetCode,
+			description: "expression is not callable",
+			code:        ExpressionIsNotCallableCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// WrongNumberOfArguments raises when the wrong amount of arguments is passed to a function or method
+func WrongNumberOfArguments(t *Token, got, expected int) *RuntimeError {
+	return &RuntimeError{
+		Error{
+			description: fmt.Sprintf("got %v arguments but function expects %v parameters", got, expected),
+			code:        ExpressionIsNotCallableCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

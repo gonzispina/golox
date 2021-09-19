@@ -11,22 +11,22 @@ func main() {
 	expressions := map[string]string{
 		"Assign":   "name *Token, value Expression",
 		"Binary":   "left Expression, operator *Token, right Expression",
-		"Logical":  "left Expression, operator *Token, right Expression",
+		"Call":     "callee Expression, paren *Token, arguments []Expression",
 		"Grouping": "expression Expression",
+		"Logical":  "left Expression, operator *Token, right Expression",
 		"Literal":  "value interface{}",
 		"Unary":    "operator *Token, right Expression",
 		"Variable": "token *Token",
 	}
 
 	statements := map[string]string{
-		"ExpressionStmt": "expression Expression",
-		"IfStmt":         "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
-		"ForStmt":        "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *BreakStmt, cont *ContinueStmt",
-		"PrintStmt":      "expression Expression",
-		"VarStmt":        "token *Token, initializer Expression",
-		"BlockStmt":      "statements []Stmt",
-		"BreakStmt":      "value bool",
-		"ContinueStmt":   "value bool",
+		"ExpressionStmt":   "expression Expression",
+		"IfStmt":           "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
+		"ForStmt":          "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *CircuitBreakStmt, cont *CircuitBreakStmt",
+		"PrintStmt":        "expression Expression",
+		"VarStmt":          "token *Token, initializer Expression",
+		"BlockStmt":        "statements []Stmt",
+		"CircuitBreakStmt": "value bool",
 	}
 
 	dir, _ := os.Getwd()
