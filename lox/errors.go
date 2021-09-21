@@ -20,6 +20,8 @@ const (
 	BreakStatementOutsideLoopCode = "BreakStatementOutsideLoop"
 	// ContinueStatementOutsideLoopCode error
 	ContinueStatementOutsideLoopCode = "ContinueStatementOutsideLoop"
+	// ReturnStatementOutsideFunctionCode error
+	ReturnStatementOutsideFunctionCode = "ReturnStatementOutsideFunction"
 	// ArgumentSizeExceededCode error
 	ArgumentSizeExceededCode = "ArgumentSizeExceeded"
 	// InvalidTargetCode error
@@ -63,8 +65,8 @@ func (e *SyntaxError) Error() string {
 	return e.err.Error("SyntaxError")
 }
 
-// UnexpectedLexemeError error
-func UnexpectedLexemeError(t rune, line, column int) *SyntaxError {
+// UnexpectedLexeme error
+func UnexpectedLexeme(t rune, line, column int) *SyntaxError {
 	return &SyntaxError{
 		Error{
 			description: fmt.Sprintf("unexpected token '%s'", string(t)),
@@ -75,12 +77,13 @@ func UnexpectedLexemeError(t rune, line, column int) *SyntaxError {
 	}
 }
 
-func UnexpectedTokenError(unexpected *Token, expected ...TokenType) *SyntaxError {
+// UnexpectedToken error
+func UnexpectedToken(unexpected *Token, expected ...TokenType) *SyntaxError {
 	description := fmt.Sprintf("unexpected token '%s'", unexpected.lexeme)
 
 	if len(expected) > 0 {
 		var es []string
-		for _, e := range expected[0 : len(expected)-1] {
+		for _, e := range expected[0:] {
 			es = append(es, string(e))
 		}
 
@@ -140,7 +143,7 @@ func UnclosedParenthesisError(t *Token) *SyntaxError {
 
 // ExpectedSemicolonError error
 func ExpectedSemicolonError(t *Token) *SyntaxError {
-	return UnexpectedTokenError(t, SEMICOLON)
+	return UnexpectedToken(t, SEMICOLON)
 }
 
 // ExpectedIdentifier error
@@ -157,12 +160,12 @@ func ExpectedIdentifier(t *Token) *SyntaxError {
 
 // ExpectedOpeningBrace error
 func ExpectedOpeningBrace(t *Token) *SyntaxError {
-	return UnexpectedTokenError(t, LEFT_BRACE)
+	return UnexpectedToken(t, LEFT_BRACE)
 }
 
 // ExpectedEndingBrace error
 func ExpectedEndingBrace(t *Token) *SyntaxError {
-	return UnexpectedTokenError(t, RIGHT_BRACE)
+	return UnexpectedToken(t, RIGHT_BRACE)
 }
 
 // BreakStatementOutsideLoop error
@@ -189,9 +192,16 @@ func ContinueStatementOutsideLoop(t *Token) *SyntaxError {
 	}
 }
 
-// BadFunctionSignature error
-func BadFunctionSignature(t *Token) *SyntaxError {
-	return UnexpectedTokenError(t, COMMA, RIGHT_PAREN)
+// ReturnStatementOutsideFunction error
+func ReturnStatementOutsideFunction(t *Token) *SyntaxError {
+	return &SyntaxError{
+		Error{
+			description: "return statements must be inside a function or method",
+			code:        ReturnStatementOutsideFunctionCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
 }
 
 // ArgumentLimitExceeded error

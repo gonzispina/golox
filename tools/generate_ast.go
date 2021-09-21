@@ -21,10 +21,11 @@ func main() {
 
 	statements := map[string]string{
 		"ExpressionStmt":   "expression Expression",
+		"FunctionStmt":     "name *Token, params []*Token, body *BlockStmt, rt *CircuitBreakStmt",
 		"IfStmt":           "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
 		"ForStmt":          "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *CircuitBreakStmt, cont *CircuitBreakStmt",
 		"PrintStmt":        "expression Expression",
-		"VarStmt":          "token *Token, initializer Expression",
+		"VarStmt":          "name *Token, initializer Expression",
 		"BlockStmt":        "statements []Stmt",
 		"CircuitBreakStmt": "value bool",
 	}

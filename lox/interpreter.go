@@ -225,7 +225,7 @@ func (i *Interpreter) visitVarStmt(e *VarStmt) (interface{}, error) {
 		return nil, err
 	}
 
-	i.environment.define(e.token.lexeme, value)
+	i.environment.define(e.name.lexeme, value)
 	return nil, nil
 }
 
@@ -315,6 +315,11 @@ func (i *Interpreter) visitForStmt(e *ForStmt) (interface{}, error) {
 		}
 	}
 
+	return nil, nil
+}
+
+func (i *Interpreter) visitFunctionStmt(e *FunctionStmt) (interface{}, error) {
+	i.environment.define(e.name.lexeme, NewFunction(e))
 	return nil, nil
 }
 

@@ -7,90 +7,14 @@ type Expression interface {
 
 // ExpressionVisitor defines the visit method of every Expression
 type ExpressionVisitor interface {
+	visitBinary(e *Binary) (interface{}, error)
+	visitCall(e *Call) (interface{}, error)
+	visitGrouping(e *Grouping) (interface{}, error)
 	visitLogical(e *Logical) (interface{}, error)
 	visitLiteral(e *Literal) (interface{}, error)
 	visitUnary(e *Unary) (interface{}, error)
 	visitVariable(e *Variable) (interface{}, error)
 	visitAssign(e *Assign) (interface{}, error)
-	visitBinary(e *Binary) (interface{}, error)
-	visitCall(e *Call) (interface{}, error)
-	visitGrouping(e *Grouping) (interface{}, error)
-}
-
-// NewUnary Expression constructor
-func NewUnary(operator *Token, right Expression) *Unary {
-	return &Unary{
-		operator: operator,
-		right: right,
-	}
-}
-
-// Unary Expression implementation
-type Unary struct {
-	operator *Token
-	right Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Unary) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitUnary(e)
-}
-
-// NewVariable Expression constructor
-func NewVariable(token *Token) *Variable {
-	return &Variable{
-		token: token,
-	}
-}
-
-// Variable Expression implementation
-type Variable struct {
-	token *Token
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Variable) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitVariable(e)
-}
-
-// NewAssign Expression constructor
-func NewAssign(name *Token, value Expression) *Assign {
-	return &Assign{
-		name: name,
-		value: value,
-	}
-}
-
-// Assign Expression implementation
-type Assign struct {
-	name *Token
-	value Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Assign) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitAssign(e)
-}
-
-// NewBinary Expression constructor
-func NewBinary(left Expression, operator *Token, right Expression) *Binary {
-	return &Binary{
-		left: left,
-		operator: operator,
-		right: right,
-	}
-}
-
-// Binary Expression implementation
-type Binary struct {
-	left Expression
-	operator *Token
-	right Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Binary) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitBinary(e)
 }
 
 // NewCall Expression constructor
@@ -169,6 +93,82 @@ func(e *Literal) Accept(v ExpressionVisitor) (interface{}, error) {
 	return v.visitLiteral(e)
 }
 
+// NewUnary Expression constructor
+func NewUnary(operator *Token, right Expression) *Unary {
+	return &Unary{
+		operator: operator,
+		right: right,
+	}
+}
+
+// Unary Expression implementation
+type Unary struct {
+	operator *Token
+	right Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Unary) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitUnary(e)
+}
+
+// NewVariable Expression constructor
+func NewVariable(token *Token) *Variable {
+	return &Variable{
+		token: token,
+	}
+}
+
+// Variable Expression implementation
+type Variable struct {
+	token *Token
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Variable) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitVariable(e)
+}
+
+// NewAssign Expression constructor
+func NewAssign(name *Token, value Expression) *Assign {
+	return &Assign{
+		name: name,
+		value: value,
+	}
+}
+
+// Assign Expression implementation
+type Assign struct {
+	name *Token
+	value Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Assign) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitAssign(e)
+}
+
+// NewBinary Expression constructor
+func NewBinary(left Expression, operator *Token, right Expression) *Binary {
+	return &Binary{
+		left: left,
+		operator: operator,
+		right: right,
+	}
+}
+
+// Binary Expression implementation
+type Binary struct {
+	left Expression
+	operator *Token
+	right Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Binary) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitBinary(e)
+}
+
 // Stmt representation
 type Stmt interface {
 	Accept(v StmtVisitor) (interface{}, error)
@@ -176,13 +176,41 @@ type Stmt interface {
 
 // StmtVisitor defines the visit method of every Stmt
 type StmtVisitor interface {
-	visitExpressionStmt(e *ExpressionStmt) (interface{}, error)
-	visitIfStmt(e *IfStmt) (interface{}, error)
-	visitForStmt(e *ForStmt) (interface{}, error)
-	visitPrintStmt(e *PrintStmt) (interface{}, error)
 	visitVarStmt(e *VarStmt) (interface{}, error)
 	visitBlockStmt(e *BlockStmt) (interface{}, error)
 	visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, error)
+	visitExpressionStmt(e *ExpressionStmt) (interface{}, error)
+	visitFunctionStmt(e *FunctionStmt) (interface{}, error)
+	visitIfStmt(e *IfStmt) (interface{}, error)
+	visitForStmt(e *ForStmt) (interface{}, error)
+	visitPrintStmt(e *PrintStmt) (interface{}, error)
+}
+
+// NewForStmt Stmt constructor
+func NewForStmt(initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *CircuitBreakStmt, cont *CircuitBreakStmt) *ForStmt {
+	return &ForStmt{
+		initializer: initializer,
+		condition: condition,
+		increment: increment,
+		body: body,
+		br: br,
+		cont: cont,
+	}
+}
+
+// ForStmt Stmt implementation
+type ForStmt struct {
+	initializer Stmt
+	condition Expression
+	increment Expression
+	body *BlockStmt
+	br *CircuitBreakStmt
+	cont *CircuitBreakStmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *ForStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitForStmt(e)
 }
 
 // NewPrintStmt Stmt constructor
@@ -203,16 +231,16 @@ func(e *PrintStmt) Accept(v StmtVisitor) (interface{}, error) {
 }
 
 // NewVarStmt Stmt constructor
-func NewVarStmt(token *Token, initializer Expression) *VarStmt {
+func NewVarStmt(name *Token, initializer Expression) *VarStmt {
 	return &VarStmt{
-		token: token,
+		name: name,
 		initializer: initializer,
 	}
 }
 
 // VarStmt Stmt implementation
 type VarStmt struct {
-	token *Token
+	name *Token
 	initializer Expression
 }
 
@@ -272,6 +300,29 @@ func(e *ExpressionStmt) Accept(v StmtVisitor) (interface{}, error) {
 	return v.visitExpressionStmt(e)
 }
 
+// NewFunctionStmt Stmt constructor
+func NewFunctionStmt(name *Token, params []*Token, body *BlockStmt, rt *CircuitBreakStmt) *FunctionStmt {
+	return &FunctionStmt{
+		name: name,
+		params: params,
+		body: body,
+		rt: rt,
+	}
+}
+
+// FunctionStmt Stmt implementation
+type FunctionStmt struct {
+	name *Token
+	params []*Token
+	body *BlockStmt
+	rt *CircuitBreakStmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *FunctionStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitFunctionStmt(e)
+}
+
 // NewIfStmt Stmt constructor
 func NewIfStmt(expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt) *IfStmt {
 	return &IfStmt{
@@ -291,32 +342,5 @@ type IfStmt struct {
 // Accept method of the visitor pattern it calls the proper visit method
 func(e *IfStmt) Accept(v StmtVisitor) (interface{}, error) {
 	return v.visitIfStmt(e)
-}
-
-// NewForStmt Stmt constructor
-func NewForStmt(initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *CircuitBreakStmt, cont *CircuitBreakStmt) *ForStmt {
-	return &ForStmt{
-		initializer: initializer,
-		condition: condition,
-		increment: increment,
-		body: body,
-		br: br,
-		cont: cont,
-	}
-}
-
-// ForStmt Stmt implementation
-type ForStmt struct {
-	initializer Stmt
-	condition Expression
-	increment Expression
-	body *BlockStmt
-	br *CircuitBreakStmt
-	cont *CircuitBreakStmt
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *ForStmt) Accept(v StmtVisitor) (interface{}, error) {
-	return v.visitForStmt(e)
 }
 
