@@ -72,7 +72,11 @@ type Function struct {
 }
 
 func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (interface{}, error) {
-	_, _ = f.BaseCallable.Call(i, paren, arguments)
+	_, err := f.BaseCallable.Call(i, paren, arguments)
+	if err != nil {
+		return nil, err
+	}
+
 	prev := *i.environment
 	i.environment = f.environment
 
@@ -88,7 +92,7 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 		}
 
 		if f.statement.rt.value {
-			return nil, nil
+			return i.evaluate(f.statement.rt.expression)
 		}
 	}
 

@@ -37,6 +37,8 @@ const (
 	UndefinedVariableCode = "UndefinedVariable"
 	// ExpressionIsNotCallableCode error
 	ExpressionIsNotCallableCode = "ExpressionIsNotCallable"
+	// WrongNumberOfArgumentsCode error
+	WrongNumberOfArgumentsCode = "WrongNumberOfArguments"
 )
 
 // Error representation
@@ -81,15 +83,18 @@ func UnexpectedLexeme(t rune, line, column int) *SyntaxError {
 func UnexpectedToken(unexpected *Token, expected ...TokenType) *SyntaxError {
 	description := fmt.Sprintf("unexpected token '%s'", unexpected.lexeme)
 
-	if len(expected) > 0 {
+	if len(expected) >= 1 {
 		var es []string
-		for _, e := range expected[0:] {
-			es = append(es, string(e))
-		}
+		var expectation = ""
+		if len(expected) >= 2 {
+			for _, e := range expected[0 : len(expected)-1] {
+				es = append(es, string(e))
+			}
 
-		expectation := fmt.Sprintf("'%s'", strings.Join(es, "', '"))
-		if len(expected) > 1 {
+			expectation = fmt.Sprintf("'%s'", strings.Join(es, "', '"))
 			expectation = fmt.Sprintf("%s or '%s'", expectation, expected[len(expected)-1])
+		} else {
+			expectation = fmt.Sprintf("'%s'", expected[0])
 		}
 
 		description = fmt.Sprintf("%s. Expecting %s", description, expectation)
@@ -302,7 +307,7 @@ func WrongNumberOfArguments(t *Token, got, expected int) *RuntimeError {
 	return &RuntimeError{
 		Error{
 			description: fmt.Sprintf("got %v arguments but function expects %v parameters", got, expected),
-			code:        ExpressionIsNotCallableCode,
+			code:        WrongNumberOfArgumentsCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

@@ -151,7 +151,7 @@ func (p *Parser) funDeclaration() (Stmt, error) {
 		return nil, ExpectedOpeningBrace(p.current())
 	}
 
-	rt := NewCircuitBreakStmt(false)
+	rt := NewCircuitBreakStmt(false, nil)
 	block, err := p.blockStatement(nil, nil, rt)
 	if err != nil {
 		return nil, err
@@ -189,8 +189,8 @@ func (p *Parser) statement(br, cont, rt *CircuitBreakStmt) (Stmt, error) {
 func (p *Parser) forStatement(rt *CircuitBreakStmt) (*ForStmt, error) {
 	var err error
 
-	cont := NewCircuitBreakStmt(false)
-	br := NewCircuitBreakStmt(false)
+	cont := NewCircuitBreakStmt(false, nil)
+	br := NewCircuitBreakStmt(false, nil)
 
 	if p.match(LEFT_BRACE) {
 		body, err := p.blockStatement(br, cont, rt)
@@ -334,6 +334,12 @@ func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, err
 				return nil, ReturnStatementOutsideFunction(p.current())
 			}
 
+			e, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+
+			rt.expression = e
 			statement = rt
 			if !p.match(SEMICOLON) {
 				return nil, ExpectedSemicolonError(p.current())

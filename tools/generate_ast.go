@@ -27,7 +27,7 @@ func main() {
 		"PrintStmt":        "expression Expression",
 		"VarStmt":          "name *Token, initializer Expression",
 		"BlockStmt":        "statements []Stmt",
-		"CircuitBreakStmt": "value bool",
+		"CircuitBreakStmt": "value bool, expression Expression",
 	}
 
 	dir, _ := os.Getwd()

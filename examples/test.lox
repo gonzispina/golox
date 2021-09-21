@@ -1,6 +1,10 @@
-fun hola() {
-    for var i = 0; i < 10; i = i + 1 {
-        print i;
-    }
+fun concat(v1, v2) {
+    return v1 + v2;
 }
-hola();
+
+fun hola(name) {
+  return concat("hola ", concat(name, "!"));
+}
+
+var greeting = hola("Gonzalo");
+print greeting;
