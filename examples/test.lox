@@ -1,15 +1,20 @@
-fun concat(v1, v2) {
-    return v1 + v2;
+fun makeCounter() {
+    var i = 0;
+
+    var counter = fun () {
+       i = i + 1;
+       return i;
+   };
+
+   return counter;
 }
 
-fun hola(name) {
-  return concat("hola ", concat(name, "!"));
-}
+var counter = makeCounter();
 
-fun doNothing() {
-    return;
+for var i = counter(); i < 10; i = counter() {
+    print i;
+    if i == 2 {
+        print "finished";
+        break;
+    }
 }
-
-var greeting = hola("Gonzalo");
-print greeting;
-print doNothing();

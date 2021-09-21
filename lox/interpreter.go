@@ -24,7 +24,9 @@ func (i *Interpreter) Interpret(s []Stmt) error {
 			return err
 		}
 		if v != nil {
-			fmt.Printf("%v\n", v)
+			if _, ok := v.(Callable); !ok {
+				fmt.Printf("%v\n", v)
+			}
 		}
 	}
 	return nil
@@ -220,9 +222,14 @@ func (i *Interpreter) visitExpressionStmt(s *ExpressionStmt) (interface{}, error
 }
 
 func (i *Interpreter) visitVarStmt(e *VarStmt) (interface{}, error) {
-	value, err := i.evaluate(e.initializer)
-	if err != nil {
-		return nil, err
+	var value interface{}
+	var err error
+
+	if e.initializer != nil {
+		value, err = i.execute(e.initializer)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	i.environment.define(e.name.lexeme, value)
@@ -319,8 +326,11 @@ func (i *Interpreter) visitForStmt(e *ForStmt) (interface{}, error) {
 }
 
 func (i *Interpreter) visitFunctionStmt(e *FunctionStmt) (interface{}, error) {
-	i.environment.define(e.name.lexeme, NewFunction(e))
-	return nil, nil
+	f := NewFunction(e, i.environment)
+	if e.name != nil {
+		i.environment.define(e.name.lexeme, f)
+	}
+	return f, nil
 }
 
 func (i *Interpreter) visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, error) {

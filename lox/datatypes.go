@@ -34,14 +34,18 @@ type Callable interface {
 }
 
 // NewBaseCallable constructor
-func NewBaseCallable(parameters []*Token) *BaseCallable {
-	return &BaseCallable{parameters: parameters}
+func NewBaseCallable(parameters []*Token, closure *Environment) *BaseCallable {
+	return &BaseCallable{
+		parameters: parameters,
+		closure:    closure,
+	}
 }
 
 // BaseCallable to create compositions
 type BaseCallable struct {
 	parameters  []*Token
 	environment *Environment
+	closure     *Environment
 }
 
 // Call method
@@ -50,7 +54,7 @@ func (c *BaseCallable) Call(i *Interpreter, paren *Token, arguments []interface{
 		return nil, WrongNumberOfArguments(paren, len(arguments), len(c.parameters))
 	}
 
-	c.environment = NewEnvironment(i.environment)
+	c.environment = NewEnvironment(c.closure)
 	for index, parameter := range c.parameters {
 		c.environment.define(parameter.lexeme, arguments[index])
 	}
@@ -58,9 +62,9 @@ func (c *BaseCallable) Call(i *Interpreter, paren *Token, arguments []interface{
 	return nil, nil
 }
 
-func NewFunction(statement *FunctionStmt) *Function {
+func NewFunction(statement *FunctionStmt, closure *Environment) *Function {
 	return &Function{
-		BaseCallable: NewBaseCallable(statement.params),
+		BaseCallable: NewBaseCallable(statement.params, closure),
 		statement:    statement,
 	}
 }
@@ -91,8 +95,8 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 			return nil, err
 		}
 
-		if f.statement.rt.value && f.statement.rt.expression != nil {
-			return i.evaluate(f.statement.rt.expression)
+		if f.statement.rt.value && f.statement.rt.statement != nil {
+			return i.execute(f.statement.rt.statement)
 		}
 	}
 

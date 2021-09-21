@@ -25,9 +25,9 @@ func main() {
 		"IfStmt":           "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
 		"ForStmt":          "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *CircuitBreakStmt, cont *CircuitBreakStmt",
 		"PrintStmt":        "expression Expression",
-		"VarStmt":          "name *Token, initializer Expression",
+		"VarStmt":          "name *Token, initializer Stmt",
 		"BlockStmt":        "statements []Stmt",
-		"CircuitBreakStmt": "value bool, expression Expression",
+		"CircuitBreakStmt": "value bool, statement Stmt",
 	}
 
 	dir, _ := os.Getwd()

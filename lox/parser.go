@@ -96,19 +96,22 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 	}
 
 	var err error
-	var initializer Expression
+	var initializer Stmt
 
 	name := p.advance()
-	initializer = NewLiteral("nil")
+	initializer = nil
 	if p.match(EQUAL) {
-		initializer, err = p.expression()
+		if p.match(FUN) {
+			initializer, err = p.funDeclaration()
+			if !p.match(SEMICOLON) {
+				return nil, UnexpectedToken(p.current(), SEMICOLON)
+			}
+		} else {
+			initializer, err = p.expressionStatement()
+		}
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if !p.match(SEMICOLON) {
-		return nil, ExpectedSemicolonError(p.current())
 	}
 
 	return NewVarStmt(name, initializer), nil
@@ -116,11 +119,11 @@ func (p *Parser) varDeclaration() (Stmt, error) {
 
 // funDeclaration → IDENTIFIER "(" parameters? ")" block
 func (p *Parser) funDeclaration() (Stmt, error) {
-	if !p.current().Is(IDENTIFIER) {
-		return nil, ExpectedIdentifier(p.current())
+	var name *Token
+	if p.match(IDENTIFIER) {
+		name = p.previous()
 	}
 
-	name := p.advance()
 	if !p.match(LEFT_PAREN) {
 		return nil, UnexpectedToken(p.current(), LEFT_PAREN)
 	}
@@ -298,7 +301,7 @@ func (p *Parser) expressionStatement() (*ExpressionStmt, error) {
 		return nil, err
 	}
 
-	if !p.advance().Is(SEMICOLON) {
+	if !p.match(SEMICOLON) {
 		return nil, ExpectedSemicolonError(p.current())
 	}
 
@@ -335,15 +338,12 @@ func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, err
 			}
 
 			if !p.match(SEMICOLON) {
-				e, err := p.expression()
+				e, err := p.declaration(br, cont, nil)
 				if err != nil {
 					return nil, err
 				}
 
-				rt.expression = e
-				if !p.match(SEMICOLON) {
-					return nil, ExpectedSemicolonError(p.current())
-				}
+				rt.statement = e
 			}
 
 			statement = rt
