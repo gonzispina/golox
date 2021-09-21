@@ -91,7 +91,7 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 			return nil, err
 		}
 
-		if f.statement.rt.value {
+		if f.statement.rt.value && f.statement.rt.expression != nil {
 			return i.evaluate(f.statement.rt.expression)
 		}
 	}

@@ -6,5 +6,10 @@ fun hola(name) {
   return concat("hola ", concat(name, "!"));
 }
 
+fun doNothing() {
+    return;
+}
+
 var greeting = hola("Gonzalo");
 print greeting;
+print doNothing();

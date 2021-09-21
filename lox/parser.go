@@ -334,16 +334,19 @@ func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, err
 				return nil, ReturnStatementOutsideFunction(p.current())
 			}
 
-			e, err := p.expression()
-			if err != nil {
-				return nil, err
+			if !p.match(SEMICOLON) {
+				e, err := p.expression()
+				if err != nil {
+					return nil, err
+				}
+
+				rt.expression = e
+				if !p.match(SEMICOLON) {
+					return nil, ExpectedSemicolonError(p.current())
+				}
 			}
 
-			rt.expression = e
 			statement = rt
-			if !p.match(SEMICOLON) {
-				return nil, ExpectedSemicolonError(p.current())
-			}
 		} else {
 			statement, err = p.declaration(br, cont, rt)
 			if err != nil {
