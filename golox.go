@@ -94,7 +94,15 @@ func run(b []byte) error {
 		return err
 	}
 
-	err = lox.NewInterpreter().Interpret(e)
+	interpreter := lox.NewInterpreter()
+
+	_, err = lox.NewResolver(interpreter).Resolve(e)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	err = interpreter.Interpret(e)
 	if err != nil {
 		fmt.Println(err)
 		return err

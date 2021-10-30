@@ -1,20 +1,18 @@
-fun makeCounter() {
-    var i = 0;
+var a = "global";
+{
+  var showA = fun () {
+    print a;
+  };
 
-    var counter = fun () {
-       i = i + 1;
-       return i;
-   };
-
-   return counter;
+  showA();
+  showA();
 }
 
-var counter = makeCounter();
 
-for var i = counter(); i < 10; i = counter() {
-    print i;
-    if i == 2 {
-        print "finished";
-        break;
-    }
+a = 2;
+fun sumToA(b) {
+    return b + a;
 }
+
+print sumToA(1);
+print sumToA(1);

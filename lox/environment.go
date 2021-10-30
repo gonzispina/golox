@@ -31,6 +31,13 @@ func (e *Environment) get(s string) (interface{}, bool) {
 	return e.enclosing.get(s)
 }
 
+func (e *Environment) getAt(s string, distance int) (interface{}, bool) {
+	if distance <= 0 {
+		return e.get(s)
+	}
+	return e.enclosing.getAt(s, distance-1)
+}
+
 func (e *Environment) assign(s string, value interface{}) bool {
 	_, ok := e.values[s]
 	if ok {
@@ -43,4 +50,12 @@ func (e *Environment) assign(s string, value interface{}) bool {
 	}
 
 	return e.enclosing.assign(s, value)
+}
+
+func (e *Environment) assignAt(s string, value interface{}, distance int) bool {
+	if distance == 0 {
+		return e.assign(s, value)
+	}
+
+	return e.assignAt(s, value, distance-1)
 }

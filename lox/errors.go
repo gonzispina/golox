@@ -26,6 +26,12 @@ const (
 	ArgumentSizeExceededCode = "ArgumentSizeExceeded"
 	// InvalidTargetCode error
 	InvalidTargetCode = "InvalidTarget"
+	// InvalidSelfReferenceCode error
+	InvalidSelfReferenceCode = "InvalidSelfReference"
+	// VariableAlreadyDeclaredCode error
+	VariableAlreadyDeclaredCode = "VariableAlreadyDeclared"
+	// UnusedVariableCode error
+	UnusedVariableCode = "UnusedVariable"
 
 	// InvalidDataTypeCode error
 	InvalidDataTypeCode = "InvalidDataType"
@@ -227,6 +233,43 @@ func InvalidTarget(t *Token) *SyntaxError {
 		Error{
 			description: "invalid assignment target",
 			code:        InvalidTargetCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// InitializerSelfReference when a variable is accessed in its own initializer
+// for example: var test = test + 1
+func InitializerSelfReference(t *Token) *SyntaxError {
+	return &SyntaxError{
+		err: Error{
+			description: "can't read local variable in its own initializer",
+			code:        InvalidSelfReferenceCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// VariableAlreadyDeclared raises when a variable is declared more than once.
+func VariableAlreadyDeclared(t *Token) *SyntaxError {
+	return &SyntaxError{
+		err: Error{
+			description: fmt.Sprintf("variable '%s' is already declared in this scope", t.lexeme),
+			code:        VariableAlreadyDeclaredCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// UnusedVariable raises when a variable is declared but never used.
+func UnusedVariable(t *Token) *SyntaxError {
+	return &SyntaxError{
+		err: Error{
+			description: fmt.Sprintf("variable '%s' declared but never used", t.lexeme),
+			code:        UnusedVariableCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

@@ -59,7 +59,7 @@ func (p *Parser) Parse() ([]Stmt, []error) {
 		return nil, errs
 	}
 
-	return s, nil
+	return []Stmt{NewBlockStmt(s)}, nil
 }
 
 func (p *Parser) synchronize() {

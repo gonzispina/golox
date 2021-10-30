@@ -8,12 +8,13 @@ import (
 func NewInterpreter() *Interpreter {
 	e := NewEnvironment(nil)
 	e.define("clock", NewClockFunction())
-	return &Interpreter{environment: e}
+	return &Interpreter{environment: e, locals: map[Expression]int{}}
 }
 
 // Interpreter of the lox language
 type Interpreter struct {
 	environment *Environment
+	locals      map[Expression]int
 }
 
 // Interpret the given expression
@@ -30,6 +31,29 @@ func (i *Interpreter) Interpret(s []Stmt) error {
 		}
 	}
 	return nil
+}
+
+func (i *Interpreter) Resolve(e Expression, distance int) {
+	i.locals[e] = distance
+}
+
+func (i *Interpreter) lookUpVariable(lexeme string, variable *Variable) (interface{}, error) {
+	var v interface{}
+	var found bool
+
+	distance, ok := i.locals[variable]
+	if ok {
+		v, found = i.environment.getAt(lexeme, distance)
+	} else {
+		v, found = i.environment.get(lexeme)
+	}
+
+	if !found {
+		return nil, UndefinedVariable(lexeme, variable.token)
+	}
+
+	return v, nil
+
 }
 
 func (i *Interpreter) stringify(v interface{}) string {
@@ -139,11 +163,7 @@ func (i *Interpreter) visitBinary(e *Binary) (interface{}, error) {
 }
 
 func (i *Interpreter) visitVariable(e *Variable) (interface{}, error) {
-	v, ok := i.environment.get(e.token.lexeme)
-	if !ok {
-		return nil, UndefinedVariable(e.token.lexeme, e.token)
-	}
-	return v, nil
+	return i.lookUpVariable(e.token.lexeme, e)
 }
 
 // assignment → IDENTIFIER "=" assignment | equality ;
