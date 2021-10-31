@@ -115,7 +115,7 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 			return nil, err
 		}
 
-		if *f.statement.rt {
+		if _, ok := stmt.(*CircuitBreakStmt); ok {
 			return s, nil
 		}
 	}
