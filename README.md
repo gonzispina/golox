@@ -2,21 +2,13 @@
 
 This is an implementation of the Lox Language [Crafting Interpreters](https://craftinginterpreters.com).
 
-##Key differences
+## Key differences
 
 Most of the syntax is the same as proposed in the book except for:
-### No mandatory parenthesized expressions
 
-Just like Go, there's no need for parenthesized expressions in 'if' and 'for' statements
-
-
-### Go like 'for' statments 
-
-The syntax of 'for' statements is the same as Go.
-
-### No 'while' statements
-
-I just don't like them.
+- **No mandatory parenthesized expressions:** Just like Go, there's no need for parenthesized expressions in 'if' and 'for' statements
+- **Go like 'for' statments:** The syntax of 'for' statements is the same as Go.
+- **No 'while' statements:** I just don't like them.
 
 ## Extra features
 * Enhanced error reporting
