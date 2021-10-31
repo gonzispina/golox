@@ -419,8 +419,8 @@ func (p *Parser) assignment() (Expression, error) {
 
 	if variable, ok := e.(*Variable); ok {
 		return NewAssign(variable.token, value), nil
-	} else if get, ok := e.(*Variable); ok {
-		return NewSet(get, get.token, value), nil
+	} else if get, ok := e.(*Get); ok {
+		return NewSet(get.object, get.name, value), nil
 	} else {
 		return nil, InvalidTarget(equals)
 	}
@@ -586,6 +586,7 @@ func (p *Parser) call() (Expression, error) {
 					continue
 				} else if p.match(RIGHT_PAREN) {
 					e = NewCall(e, p.current(), arguments)
+					break
 				} else {
 					return nil, UnexpectedToken(p.current(), COMMA, RIGHT_PAREN)
 				}
@@ -607,6 +608,10 @@ func (p *Parser) call() (Expression, error) {
 func (p *Parser) primary() (Expression, error) {
 	if p.current().OneOf(NIL, TRUE, FALSE, NUMBER, STRING) {
 		return NewLiteral(p.advance().literal), nil
+	}
+
+	if p.current().Is(THIS) {
+		return NewThis(p.advance()), nil
 	}
 
 	if p.current().Is(IDENTIFIER) {

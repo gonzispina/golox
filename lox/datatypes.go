@@ -45,8 +45,8 @@ type Callable interface {
 // NewBaseCallable constructor
 func NewBaseCallable(parameters []*Token, closure *Environment) *BaseCallable {
 	return &BaseCallable{
-		parameters: parameters,
-		closure:    closure,
+		parameters:  parameters,
+		environment: NewEnvironment(closure),
 	}
 }
 
@@ -54,7 +54,6 @@ func NewBaseCallable(parameters []*Token, closure *Environment) *BaseCallable {
 type BaseCallable struct {
 	parameters  []*Token
 	environment *Environment
-	closure     *Environment
 }
 
 // Call method
@@ -63,7 +62,6 @@ func (c *BaseCallable) Call(i *Interpreter, paren *Token, arguments []interface{
 		return nil, WrongNumberOfArguments(paren, len(arguments), len(c.parameters))
 	}
 
-	c.environment = NewEnvironment(c.closure)
 	for index, parameter := range c.parameters {
 		c.environment.define(parameter.lexeme, arguments[index])
 	}
@@ -86,6 +84,15 @@ type Function struct {
 
 func (f *Function) String() string {
 	return "function"
+}
+
+func (f *Function) Bind(this *Instance) *Function {
+	method := &Function{
+		BaseCallable: f.BaseCallable,
+		statement:    f.statement,
+	}
+	method.environment.define("this", this)
+	return method
 }
 
 func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (interface{}, error) {
@@ -117,17 +124,15 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 }
 
 // NewClass constructor
-func NewClass(statement *ClassStmt, methods map[string]*Function, closure *Environment) *Class {
+func NewClass(statement *ClassStmt, methods map[string]*Function) *Class {
 	return &Class{
-		BaseCallable: NewBaseCallable(make([]*Token, 0), closure),
-		statement:    statement,
-		methods:      methods,
+		statement: statement,
+		methods:   methods,
 	}
 }
 
 // Class representation
 type Class struct {
-	*BaseCallable
 	statement *ClassStmt
 	methods   map[string]*Function
 }
@@ -137,27 +142,36 @@ func (c *Class) String() string {
 }
 
 func (c *Class) Call(i *Interpreter, paren *Token, arguments []interface{}) (interface{}, error) {
-	_, err := c.BaseCallable.Call(i, paren, arguments)
-	if err != nil {
-		return nil, err
-	}
-	return NewInstance(c), nil
-}
-
-func (c *Class) Get(method *Token) (Callable, bool) {
-	v, ok := c.methods[method.lexeme]
-	return v, ok
+	return NewInstance(c, i, paren, arguments)
 }
 
 // NewInstance constructor
-func NewInstance(class *Class) *Instance {
-	return &Instance{class: class, properties: map[string]interface{}{}}
+func NewInstance(class *Class, i *Interpreter, paren *Token, arguments []interface{}) (*Instance, error) {
+	instance := &Instance{
+		class:      class,
+		properties: map[string]interface{}{},
+		methods:    map[string]*Function{},
+	}
+
+	for name, method := range class.methods {
+		instance.methods[name] = method.Bind(instance)
+	}
+
+	if init, ok := instance.methods["init"]; ok {
+		_, err := init.Call(i, paren, arguments)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return instance, nil
 }
 
 // Instance representation
 type Instance struct {
 	class      *Class
 	properties map[string]interface{}
+	methods    map[string]*Function
 }
 
 func (i *Instance) String() string {
@@ -170,7 +184,7 @@ func (i *Instance) Get(property *Token) (interface{}, error) {
 		return v, nil
 	}
 
-	if m, ok := i.class.Get(property); ok {
+	if m, ok := i.methods[property.lexeme]; ok {
 		return m, nil
 	}
 

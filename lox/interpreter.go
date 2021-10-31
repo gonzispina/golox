@@ -37,11 +37,11 @@ func (i *Interpreter) Resolve(e Expression, distance int) {
 	i.locals[e] = distance
 }
 
-func (i *Interpreter) lookUpVariable(lexeme string, variable *Variable) (interface{}, error) {
+func (i *Interpreter) lookUpVariable(lexeme string, e Expression) (interface{}, error) {
 	var v interface{}
 	var found bool
 
-	distance, ok := i.locals[variable]
+	distance, ok := i.locals[e]
 	if ok {
 		v, found = i.environment.getAt(lexeme, distance)
 	} else {
@@ -49,7 +49,14 @@ func (i *Interpreter) lookUpVariable(lexeme string, variable *Variable) (interfa
 	}
 
 	if !found {
-		return nil, UndefinedVariable(lexeme, variable.token)
+		var t *Token
+		if variable, ok := e.(*Variable); ok {
+			t = variable.token
+		} else {
+			this := e.(*This)
+			t = this.keyword
+		}
+		return nil, UndefinedVariable(lexeme, t)
 	}
 
 	return v, nil
@@ -245,7 +252,7 @@ func (i *Interpreter) visitSet(e *Set) (interface{}, error) {
 	}
 
 	instance, ok := o.(*Instance)
-	if ok {
+	if !ok {
 		return nil, NotAnObject(e.name)
 	}
 
@@ -256,6 +263,10 @@ func (i *Interpreter) visitSet(e *Set) (interface{}, error) {
 
 	instance.Set(e.name, v)
 	return nil, nil
+}
+
+func (i *Interpreter) visitThis(e *This) (interface{}, error) {
+	return i.lookUpVariable(e.keyword.lexeme, e)
 }
 
 func (i *Interpreter) visitPrintStmt(s *PrintStmt) (interface{}, error) {
@@ -410,7 +421,7 @@ func (i *Interpreter) visitClassStmt(e *ClassStmt) (interface{}, error) {
 		methods[method.name.lexeme] = NewFunction(method, i.environment)
 	}
 
-	c := NewClass(e, methods, i.environment)
+	c := NewClass(e, methods)
 	i.environment.assign(e.name.lexeme, c)
 	return nil, nil
 }

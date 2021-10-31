@@ -32,6 +32,8 @@ const (
 	VariableAlreadyDeclaredCode = "VariableAlreadyDeclared"
 	// UnusedVariableCode error
 	UnusedVariableCode = "UnusedVariable"
+	// ThisOutsideClassCode error
+	ThisOutsideClassCode = "ThisOutsideClass"
 
 	// InvalidDataTypeCode error
 	InvalidDataTypeCode = "InvalidDataType"
@@ -274,6 +276,18 @@ func UnusedVariable(t *Token) *SyntaxError {
 		err: Error{
 			description: fmt.Sprintf("variable '%s' declared but never used", t.lexeme),
 			code:        UnusedVariableCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// ThisOutsideClass raises when 'this' keyword is being accessed outside class context.
+func ThisOutsideClass(t *Token) *SyntaxError {
+	return &SyntaxError{
+		err: Error{
+			description: "'this' cannot be used outside a class",
+			code:        ThisOutsideClassCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

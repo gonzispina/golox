@@ -14,6 +14,7 @@ func NewResolver(i *Interpreter) *Resolver {
 type Resolver struct {
 	interpreter *Interpreter
 	scopes      *ScopeStack
+	inClass     bool
 }
 
 // Resolve API
@@ -73,8 +74,10 @@ func (r *Resolver) resolveFunction(s *FunctionStmt) (interface{}, error) {
 	return v, nil
 }
 
-func (r *Resolver) beginScope() {
-	r.scopes.Push(map[string]*ScopeEntry{})
+func (r *Resolver) beginScope() map[string]*ScopeEntry {
+	scope := map[string]*ScopeEntry{}
+	r.scopes.Push(scope)
+	return scope
 }
 
 func (r *Resolver) endScope() error {
@@ -190,6 +193,13 @@ func (r *Resolver) visitSet(e *Set) (interface{}, error) {
 	return r.resolveExpression(e.object)
 }
 
+func (r *Resolver) visitThis(e *This) (interface{}, error) {
+	if !r.inClass {
+		return nil, ThisOutsideClass(e.keyword)
+	}
+	return r.resolveLocal(e, e.keyword)
+}
+
 func (r *Resolver) visitIfStmt(e *IfStmt) (interface{}, error) {
 	_, err := r.resolveExpression(e.expression)
 	if err != nil {
@@ -298,5 +308,23 @@ func (r *Resolver) visitFunctionStmt(e *FunctionStmt) (interface{}, error) {
 func (r *Resolver) visitClassStmt(e *ClassStmt) (interface{}, error) {
 	r.declare(e.name)
 	r.define(e.name)
+
+	r.beginScope()
+	r.inClass = true
+	defer func() {
+		r.inClass = false
+	}()
+
+	for _, method := range e.methods {
+		_, err := r.resolveFunction(method)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.endScope(); err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }

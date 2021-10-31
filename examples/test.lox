@@ -1,18 +1,21 @@
 class fibonacci {
-    run() {
-        var prev = 0;
-        var cur = 0;
+    init() {
+        this.cur = 0;
+        this.prev = 0;
+    }
 
+    next() {
         // lambda expression.
         return fun () {
-            if cur == 0 {
-                cur = 1;
+            if this.cur == 0 {
+                this.cur = 1;
                 return 0;
             }
 
-            var res = cur;
-            cur = cur + prev;
-            prev = res;
+
+            var res = this.cur;
+            this.cur = this.cur + this.prev;
+            this.prev = res;
 
             return res;
         }
@@ -22,5 +25,5 @@ class fibonacci {
 
 var fib = fibonacci();
 for var i = 0; i < 10; i = i + 1 {
-    print fib.run()();
+    print fib.next()();
 }

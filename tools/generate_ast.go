@@ -17,6 +17,7 @@ func main() {
 		"Grouping": "expression Expression",
 		"Logical":  "left Expression, operator *Token, right Expression",
 		"Literal":  "value interface{}",
+		"This":     "keyword *Token",
 		"Unary":    "operator *Token, right Expression",
 		"Variable": "token *Token",
 	}
