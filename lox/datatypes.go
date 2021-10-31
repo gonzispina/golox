@@ -86,17 +86,17 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 
 	defer func() {
 		i.environment = &prev
-		f.statement.rt.value = false
+		*f.statement.rt = false
 	}()
 
 	for _, stmt := range f.statement.body.statements {
-		_, err := i.execute(stmt)
+		s, err := i.execute(stmt)
 		if err != nil {
 			return nil, err
 		}
 
-		if f.statement.rt.value && f.statement.rt.statement != nil {
-			return i.execute(f.statement.rt.statement)
+		if *f.statement.rt {
+			return s, nil
 		}
 	}
 

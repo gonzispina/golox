@@ -1,18 +1,23 @@
-var a = "global";
-{
-  var showA = fun () {
-    print a;
-  };
+fun fibonacii() {
+    var prev = 0;
+    var cur = 0;
 
-  showA();
-  showA();
+    // lambda expression.
+    return fun () {
+        if cur == 0 {
+            cur = 1;
+            return 0;
+        }
+
+        var res = cur;
+        cur = cur + prev;
+        prev = res;
+
+        return res;
+    }
 }
 
-
-a = 2;
-fun sumToA(b) {
-    return b + a;
+var next = fibonacii();
+for var i = 0; i < 10; i = i + 1 {
+    print next();
 }
-
-print sumToA(1);
-print sumToA(1);

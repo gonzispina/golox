@@ -293,8 +293,8 @@ func (i *Interpreter) visitIfStmt(e *IfStmt) (interface{}, error) {
 func (i *Interpreter) visitForStmt(e *ForStmt) (interface{}, error) {
 	prev := *i.environment
 	defer func() {
-		e.cont.value = false
-		e.br.value = false
+		*e.cont = false
+		*e.br = false
 		i.environment = &prev
 	}()
 
@@ -324,12 +324,12 @@ func (i *Interpreter) visitForStmt(e *ForStmt) (interface{}, error) {
 				return nil, err
 			}
 
-			if e.cont.value {
-				e.cont.value = false
+			if *e.cont {
+				*e.cont = false
 				break
 			}
 
-			if e.br.value {
+			if *e.br {
 				return nil, nil
 			}
 		}
@@ -354,6 +354,9 @@ func (i *Interpreter) visitFunctionStmt(e *FunctionStmt) (interface{}, error) {
 }
 
 func (i *Interpreter) visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, error) {
-	e.value = true
+	*e.value = true
+	if e.statement != nil {
+		return i.execute(e.statement)
+	}
 	return nil, nil
 }

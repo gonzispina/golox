@@ -78,7 +78,7 @@ func (p *Parser) synchronize() {
 // declaration → funDeclaration | varDeclaration | statement;
 // funDeclaration → IDENTIFIER "(" parameters? ")" block
 // varDeclaration → "var" IDENTIFIER ( "=" expression )? ";"
-func (p *Parser) declaration(br, cont, rt *CircuitBreakStmt) (Stmt, error) {
+func (p *Parser) declaration(br, cont, rt *bool) (Stmt, error) {
 	if p.match(VAR) {
 		return p.varDeclaration()
 	}
@@ -154,13 +154,13 @@ func (p *Parser) funDeclaration() (Stmt, error) {
 		return nil, ExpectedOpeningBrace(p.current())
 	}
 
-	rt := NewCircuitBreakStmt(false, nil)
-	block, err := p.blockStatement(nil, nil, rt)
+	rt := false
+	block, err := p.blockStatement(nil, nil, &rt)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewFunctionStmt(name, params, block, rt), nil
+	return NewFunctionStmt(name, params, block, &rt), nil
 }
 
 // statement → exprStmt | forStmt | ifStmt | printStmt | block ;
@@ -169,7 +169,7 @@ func (p *Parser) funDeclaration() (Stmt, error) {
 // ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
 // printStmt → "print" expression ";"
 // block → "{" declaration* "}" ;
-func (p *Parser) statement(br, cont, rt *CircuitBreakStmt) (Stmt, error) {
+func (p *Parser) statement(br, cont, rt *bool) (Stmt, error) {
 	if p.match(FOR) {
 		return p.forStatement(rt)
 	}
@@ -189,34 +189,34 @@ func (p *Parser) statement(br, cont, rt *CircuitBreakStmt) (Stmt, error) {
 	return p.expressionStatement()
 }
 
-func (p *Parser) forStatement(rt *CircuitBreakStmt) (*ForStmt, error) {
+func (p *Parser) forStatement(rt *bool) (*ForStmt, error) {
 	var err error
 
-	cont := NewCircuitBreakStmt(false, nil)
-	br := NewCircuitBreakStmt(false, nil)
+	cont := false
+	br := false
 
 	if p.match(LEFT_BRACE) {
-		body, err := p.blockStatement(br, cont, rt)
+		body, err := p.blockStatement(&br, &cont, rt)
 		if err != nil {
 			return nil, err
 		}
-		return NewForStmt(nil, nil, nil, body, br, cont), nil
+		return NewForStmt(nil, nil, nil, body, &br, &cont), nil
 	}
 
 	var initializer Stmt
 	if p.current().Is(VAR) {
-		initializer, err = p.declaration(br, cont, rt)
+		initializer, err = p.declaration(&br, &cont, rt)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if p.match(LEFT_BRACE) {
-		body, err := p.blockStatement(br, cont, rt)
+		body, err := p.blockStatement(&br, &cont, rt)
 		if err != nil {
 			return nil, err
 		}
-		return NewForStmt(initializer, nil, nil, body, br, cont), nil
+		return NewForStmt(initializer, nil, nil, body, &br, &cont), nil
 	}
 
 	var conditional Expression
@@ -244,15 +244,15 @@ func (p *Parser) forStatement(rt *CircuitBreakStmt) (*ForStmt, error) {
 		return nil, ExpectedOpeningBrace(p.current())
 	}
 
-	body, err := p.blockStatement(br, cont, rt)
+	body, err := p.blockStatement(&br, &cont, rt)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewForStmt(initializer, conditional, increment, body, br, cont), nil
+	return NewForStmt(initializer, conditional, increment, body, &br, &cont), nil
 }
 
-func (p *Parser) ifStatement(br, cont, rt *CircuitBreakStmt) (*IfStmt, error) {
+func (p *Parser) ifStatement(br, cont, rt *bool) (*IfStmt, error) {
 	expression, err := p.expression()
 	if err != nil {
 		return nil, err
@@ -308,7 +308,7 @@ func (p *Parser) expressionStatement() (*ExpressionStmt, error) {
 	return NewExpressionStmt(e), nil
 }
 
-func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, error) {
+func (p *Parser) blockStatement(br, cont, rt *bool) (*BlockStmt, error) {
 	var s []Stmt
 
 	for !p.isAtEnd() && !p.current().Is(RIGHT_BRACE) {
@@ -319,7 +319,7 @@ func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, err
 				return nil, BreakStatementOutsideLoop(p.previous())
 			}
 
-			statement = br
+			statement = NewCircuitBreakStmt(br, nil)
 			if !p.match(SEMICOLON) {
 				return nil, ExpectedSemicolonError(p.current())
 			}
@@ -328,7 +328,7 @@ func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, err
 				return nil, ContinueStatementOutsideLoop(p.previous())
 			}
 
-			statement = cont
+			statement = NewCircuitBreakStmt(cont, nil)
 			if !p.match(SEMICOLON) {
 				return nil, ExpectedSemicolonError(p.current())
 			}
@@ -337,16 +337,15 @@ func (p *Parser) blockStatement(br, cont, rt *CircuitBreakStmt) (*BlockStmt, err
 				return nil, ReturnStatementOutsideFunction(p.current())
 			}
 
+			var e Stmt
 			if !p.match(SEMICOLON) {
-				e, err := p.declaration(br, cont, nil)
+				e, err = p.declaration(nil, nil, nil)
 				if err != nil {
 					return nil, err
 				}
-
-				rt.statement = e
 			}
 
-			statement = rt
+			statement = NewCircuitBreakStmt(rt, e)
 		} else {
 			statement, err = p.declaration(br, cont, rt)
 			if err != nil {

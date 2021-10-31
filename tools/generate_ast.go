@@ -21,13 +21,13 @@ func main() {
 
 	statements := map[string]string{
 		"ExpressionStmt":   "expression Expression",
-		"FunctionStmt":     "name *Token, params []*Token, body *BlockStmt, rt *CircuitBreakStmt",
+		"FunctionStmt":     "name *Token, params []*Token, body *BlockStmt, rt *bool",
 		"IfStmt":           "expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt",
-		"ForStmt":          "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *CircuitBreakStmt, cont *CircuitBreakStmt",
+		"ForStmt":          "initializer Stmt, condition Expression, increment Expression, body *BlockStmt, br *bool, cont *bool",
 		"PrintStmt":        "expression Expression",
 		"VarStmt":          "name *Token, initializer Stmt",
 		"BlockStmt":        "statements []Stmt",
-		"CircuitBreakStmt": "value bool, statement Stmt",
+		"CircuitBreakStmt": "value *bool, statement Stmt",
 	}
 
 	dir, _ := os.Getwd()
