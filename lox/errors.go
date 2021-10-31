@@ -45,6 +45,10 @@ const (
 	ExpressionIsNotCallableCode = "ExpressionIsNotCallable"
 	// WrongNumberOfArgumentsCode error
 	WrongNumberOfArgumentsCode = "WrongNumberOfArguments"
+	// NotAnObjectCode error
+	NotAnObjectCode = "NotAnObject"
+	// InvalidPropertyCode error
+	InvalidPropertyCode = "InvalidProperty"
 )
 
 // Error representation
@@ -351,6 +355,30 @@ func WrongNumberOfArguments(t *Token, got, expected int) *RuntimeError {
 		Error{
 			description: fmt.Sprintf("got %v arguments but function expects %v parameters", got, expected),
 			code:        WrongNumberOfArgumentsCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// NotAnObject raises when a property or method is being accessed but the target is not an object
+func NotAnObject(t *Token) *RuntimeError {
+	return &RuntimeError{
+		Error{
+			description: "target does not have properties",
+			code:        NotAnObjectCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// InvalidProperty raises when a property is being accessed but it does not exist
+func InvalidProperty(t *Token) *RuntimeError {
+	return &RuntimeError{
+		Error{
+			description: fmt.Sprintf("property '%s' is not defined", t.lexeme),
+			code:        InvalidPropertyCode,
 			line:        &t.line,
 			column:      &t.column,
 		},

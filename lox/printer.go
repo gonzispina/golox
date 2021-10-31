@@ -13,6 +13,14 @@ func NewASTPrinter() *ASTPrinter {
 type ASTPrinter struct {
 }
 
+func (p *ASTPrinter) visitSet(e *Set) (interface{}, error) {
+	panic("implement me")
+}
+
+func (p *ASTPrinter) visitGet(e *Get) (interface{}, error) {
+	panic("implement me")
+}
+
 func (p *ASTPrinter) visitCall(e *Call) (interface{}, error) {
 	panic("implement me")
 }

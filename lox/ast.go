@@ -7,14 +7,149 @@ type Expression interface {
 
 // ExpressionVisitor defines the visit method of every Expression
 type ExpressionVisitor interface {
-	visitLiteral(e *Literal) (interface{}, error)
-	visitUnary(e *Unary) (interface{}, error)
-	visitVariable(e *Variable) (interface{}, error)
 	visitAssign(e *Assign) (interface{}, error)
 	visitBinary(e *Binary) (interface{}, error)
 	visitCall(e *Call) (interface{}, error)
+	visitGet(e *Get) (interface{}, error)
+	visitUnary(e *Unary) (interface{}, error)
+	visitSet(e *Set) (interface{}, error)
 	visitGrouping(e *Grouping) (interface{}, error)
 	visitLogical(e *Logical) (interface{}, error)
+	visitLiteral(e *Literal) (interface{}, error)
+	visitVariable(e *Variable) (interface{}, error)
+}
+
+// NewLogical Expression constructor
+func NewLogical(left Expression, operator *Token, right Expression) *Logical {
+	return &Logical{
+		left: left,
+		operator: operator,
+		right: right,
+	}
+}
+
+// Logical Expression implementation
+type Logical struct {
+	left Expression
+	operator *Token
+	right Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Logical) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitLogical(e)
+}
+
+// NewLiteral Expression constructor
+func NewLiteral(value interface{}) *Literal {
+	return &Literal{
+		value: value,
+	}
+}
+
+// Literal Expression implementation
+type Literal struct {
+	value interface{}
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Literal) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitLiteral(e)
+}
+
+// NewVariable Expression constructor
+func NewVariable(token *Token) *Variable {
+	return &Variable{
+		token: token,
+	}
+}
+
+// Variable Expression implementation
+type Variable struct {
+	token *Token
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Variable) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitVariable(e)
+}
+
+// NewSet Expression constructor
+func NewSet(object Expression, name *Token, value Expression) *Set {
+	return &Set{
+		object: object,
+		name: name,
+		value: value,
+	}
+}
+
+// Set Expression implementation
+type Set struct {
+	object Expression
+	name *Token
+	value Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Set) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitSet(e)
+}
+
+// NewGrouping Expression constructor
+func NewGrouping(expression Expression) *Grouping {
+	return &Grouping{
+		expression: expression,
+	}
+}
+
+// Grouping Expression implementation
+type Grouping struct {
+	expression Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Grouping) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitGrouping(e)
+}
+
+// NewCall Expression constructor
+func NewCall(callee Expression, paren *Token, arguments []Expression) *Call {
+	return &Call{
+		callee: callee,
+		paren: paren,
+		arguments: arguments,
+	}
+}
+
+// Call Expression implementation
+type Call struct {
+	callee Expression
+	paren *Token
+	arguments []Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Call) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitCall(e)
+}
+
+// NewGet Expression constructor
+func NewGet(object Expression, name *Token) *Get {
+	return &Get{
+		object: object,
+		name: name,
+	}
+}
+
+// Get Expression implementation
+type Get struct {
+	object Expression
+	name *Token
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *Get) Accept(v ExpressionVisitor) (interface{}, error) {
+	return v.visitGet(e)
 }
 
 // NewUnary Expression constructor
@@ -34,23 +169,6 @@ type Unary struct {
 // Accept method of the visitor pattern it calls the proper visit method
 func(e *Unary) Accept(v ExpressionVisitor) (interface{}, error) {
 	return v.visitUnary(e)
-}
-
-// NewVariable Expression constructor
-func NewVariable(token *Token) *Variable {
-	return &Variable{
-		token: token,
-	}
-}
-
-// Variable Expression implementation
-type Variable struct {
-	token *Token
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Variable) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitVariable(e)
 }
 
 // NewAssign Expression constructor
@@ -93,82 +211,6 @@ func(e *Binary) Accept(v ExpressionVisitor) (interface{}, error) {
 	return v.visitBinary(e)
 }
 
-// NewCall Expression constructor
-func NewCall(callee Expression, paren *Token, arguments []Expression) *Call {
-	return &Call{
-		callee: callee,
-		paren: paren,
-		arguments: arguments,
-	}
-}
-
-// Call Expression implementation
-type Call struct {
-	callee Expression
-	paren *Token
-	arguments []Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Call) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitCall(e)
-}
-
-// NewGrouping Expression constructor
-func NewGrouping(expression Expression) *Grouping {
-	return &Grouping{
-		expression: expression,
-	}
-}
-
-// Grouping Expression implementation
-type Grouping struct {
-	expression Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Grouping) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitGrouping(e)
-}
-
-// NewLogical Expression constructor
-func NewLogical(left Expression, operator *Token, right Expression) *Logical {
-	return &Logical{
-		left: left,
-		operator: operator,
-		right: right,
-	}
-}
-
-// Logical Expression implementation
-type Logical struct {
-	left Expression
-	operator *Token
-	right Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Logical) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitLogical(e)
-}
-
-// NewLiteral Expression constructor
-func NewLiteral(value interface{}) *Literal {
-	return &Literal{
-		value: value,
-	}
-}
-
-// Literal Expression implementation
-type Literal struct {
-	value interface{}
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *Literal) Accept(v ExpressionVisitor) (interface{}, error) {
-	return v.visitLiteral(e)
-}
-
 // Stmt representation
 type Stmt interface {
 	Accept(v StmtVisitor) (interface{}, error)
@@ -176,14 +218,38 @@ type Stmt interface {
 
 // StmtVisitor defines the visit method of every Stmt
 type StmtVisitor interface {
-	visitBlockStmt(e *BlockStmt) (interface{}, error)
-	visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, error)
-	visitExpressionStmt(e *ExpressionStmt) (interface{}, error)
-	visitFunctionStmt(e *FunctionStmt) (interface{}, error)
-	visitIfStmt(e *IfStmt) (interface{}, error)
-	visitForStmt(e *ForStmt) (interface{}, error)
 	visitPrintStmt(e *PrintStmt) (interface{}, error)
 	visitVarStmt(e *VarStmt) (interface{}, error)
+	visitBlockStmt(e *BlockStmt) (interface{}, error)
+	visitExpressionStmt(e *ExpressionStmt) (interface{}, error)
+	visitIfStmt(e *IfStmt) (interface{}, error)
+	visitClassStmt(e *ClassStmt) (interface{}, error)
+	visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, error)
+	visitFunctionStmt(e *FunctionStmt) (interface{}, error)
+	visitForStmt(e *ForStmt) (interface{}, error)
+}
+
+// NewFunctionStmt Stmt constructor
+func NewFunctionStmt(name *Token, params []*Token, body *BlockStmt, rt *bool) *FunctionStmt {
+	return &FunctionStmt{
+		name: name,
+		params: params,
+		body: body,
+		rt: rt,
+	}
+}
+
+// FunctionStmt Stmt implementation
+type FunctionStmt struct {
+	name *Token
+	params []*Token
+	body *BlockStmt
+	rt *bool
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *FunctionStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitFunctionStmt(e)
 }
 
 // NewForStmt Stmt constructor
@@ -211,6 +277,99 @@ type ForStmt struct {
 // Accept method of the visitor pattern it calls the proper visit method
 func(e *ForStmt) Accept(v StmtVisitor) (interface{}, error) {
 	return v.visitForStmt(e)
+}
+
+// NewClassStmt Stmt constructor
+func NewClassStmt(name *Token, methods []*FunctionStmt) *ClassStmt {
+	return &ClassStmt{
+		name: name,
+		methods: methods,
+	}
+}
+
+// ClassStmt Stmt implementation
+type ClassStmt struct {
+	name *Token
+	methods []*FunctionStmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *ClassStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitClassStmt(e)
+}
+
+// NewCircuitBreakStmt Stmt constructor
+func NewCircuitBreakStmt(value *bool, statement Stmt) *CircuitBreakStmt {
+	return &CircuitBreakStmt{
+		value: value,
+		statement: statement,
+	}
+}
+
+// CircuitBreakStmt Stmt implementation
+type CircuitBreakStmt struct {
+	value *bool
+	statement Stmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *CircuitBreakStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitCircuitBreakStmt(e)
+}
+
+// NewBlockStmt Stmt constructor
+func NewBlockStmt(statements []Stmt) *BlockStmt {
+	return &BlockStmt{
+		statements: statements,
+	}
+}
+
+// BlockStmt Stmt implementation
+type BlockStmt struct {
+	statements []Stmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *BlockStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitBlockStmt(e)
+}
+
+// NewExpressionStmt Stmt constructor
+func NewExpressionStmt(expression Expression) *ExpressionStmt {
+	return &ExpressionStmt{
+		expression: expression,
+	}
+}
+
+// ExpressionStmt Stmt implementation
+type ExpressionStmt struct {
+	expression Expression
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *ExpressionStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitExpressionStmt(e)
+}
+
+// NewIfStmt Stmt constructor
+func NewIfStmt(expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt) *IfStmt {
+	return &IfStmt{
+		expression: expression,
+		thenBranch: thenBranch,
+		elseBranch: elseBranch,
+	}
+}
+
+// IfStmt Stmt implementation
+type IfStmt struct {
+	expression Expression
+	thenBranch *BlockStmt
+	elseBranch *BlockStmt
+}
+
+// Accept method of the visitor pattern it calls the proper visit method
+func(e *IfStmt) Accept(v StmtVisitor) (interface{}, error) {
+	return v.visitIfStmt(e)
 }
 
 // NewPrintStmt Stmt constructor
@@ -247,102 +406,5 @@ type VarStmt struct {
 // Accept method of the visitor pattern it calls the proper visit method
 func(e *VarStmt) Accept(v StmtVisitor) (interface{}, error) {
 	return v.visitVarStmt(e)
-}
-
-// NewBlockStmt Stmt constructor
-func NewBlockStmt(statements []Stmt) *BlockStmt {
-	return &BlockStmt{
-		statements: statements,
-	}
-}
-
-// BlockStmt Stmt implementation
-type BlockStmt struct {
-	statements []Stmt
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *BlockStmt) Accept(v StmtVisitor) (interface{}, error) {
-	return v.visitBlockStmt(e)
-}
-
-// NewCircuitBreakStmt Stmt constructor
-func NewCircuitBreakStmt(value *bool, statement Stmt) *CircuitBreakStmt {
-	return &CircuitBreakStmt{
-		value: value,
-		statement: statement,
-	}
-}
-
-// CircuitBreakStmt Stmt implementation
-type CircuitBreakStmt struct {
-	value *bool
-	statement Stmt
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *CircuitBreakStmt) Accept(v StmtVisitor) (interface{}, error) {
-	return v.visitCircuitBreakStmt(e)
-}
-
-// NewExpressionStmt Stmt constructor
-func NewExpressionStmt(expression Expression) *ExpressionStmt {
-	return &ExpressionStmt{
-		expression: expression,
-	}
-}
-
-// ExpressionStmt Stmt implementation
-type ExpressionStmt struct {
-	expression Expression
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *ExpressionStmt) Accept(v StmtVisitor) (interface{}, error) {
-	return v.visitExpressionStmt(e)
-}
-
-// NewFunctionStmt Stmt constructor
-func NewFunctionStmt(name *Token, params []*Token, body *BlockStmt, rt *bool) *FunctionStmt {
-	return &FunctionStmt{
-		name: name,
-		params: params,
-		body: body,
-		rt: rt,
-	}
-}
-
-// FunctionStmt Stmt implementation
-type FunctionStmt struct {
-	name *Token
-	params []*Token
-	body *BlockStmt
-	rt *bool
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *FunctionStmt) Accept(v StmtVisitor) (interface{}, error) {
-	return v.visitFunctionStmt(e)
-}
-
-// NewIfStmt Stmt constructor
-func NewIfStmt(expression Expression, thenBranch *BlockStmt, elseBranch *BlockStmt) *IfStmt {
-	return &IfStmt{
-		expression: expression,
-		thenBranch: thenBranch,
-		elseBranch: elseBranch,
-	}
-}
-
-// IfStmt Stmt implementation
-type IfStmt struct {
-	expression Expression
-	thenBranch *BlockStmt
-	elseBranch *BlockStmt
-}
-
-// Accept method of the visitor pattern it calls the proper visit method
-func(e *IfStmt) Accept(v StmtVisitor) (interface{}, error) {
-	return v.visitIfStmt(e)
 }
 

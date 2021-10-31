@@ -8,21 +8,30 @@ const (
 	number   dataType = "number"
 	str      dataType = "string"
 	boolean  dataType = "boolean"
+	class    dataType = "class"
 	object   dataType = "object"
-	callable dataType = "callable"
+	function dataType = "function"
 )
 
 func getDataType(v interface{}) dataType {
 	if v == nil {
 		return object
 	}
+	if _, ok := v.(*Class); ok {
+		return class
+	}
+	if _, ok := v.(Instance); ok {
+		return object
+	}
+	if _, ok := v.(*Function); ok {
+		return function
+	}
+
 	switch reflect.TypeOf(v).Kind() {
 	case reflect.String:
 		return str
 	case reflect.Bool:
 		return boolean
-	case reflect.Func:
-		return callable
 	default:
 		return number
 	}
@@ -75,6 +84,10 @@ type Function struct {
 	statement *FunctionStmt
 }
 
+func (f *Function) String() string {
+	return "function"
+}
+
 func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (interface{}, error) {
 	_, err := f.BaseCallable.Call(i, paren, arguments)
 	if err != nil {
@@ -101,4 +114,69 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 	}
 
 	return nil, nil
+}
+
+// NewClass constructor
+func NewClass(statement *ClassStmt, methods map[string]*Function, closure *Environment) *Class {
+	return &Class{
+		BaseCallable: NewBaseCallable(make([]*Token, 0), closure),
+		statement:    statement,
+		methods:      methods,
+	}
+}
+
+// Class representation
+type Class struct {
+	*BaseCallable
+	statement *ClassStmt
+	methods   map[string]*Function
+}
+
+func (c *Class) String() string {
+	return c.statement.name.lexeme
+}
+
+func (c *Class) Call(i *Interpreter, paren *Token, arguments []interface{}) (interface{}, error) {
+	_, err := c.BaseCallable.Call(i, paren, arguments)
+	if err != nil {
+		return nil, err
+	}
+	return NewInstance(c), nil
+}
+
+func (c *Class) Get(method *Token) (Callable, bool) {
+	v, ok := c.methods[method.lexeme]
+	return v, ok
+}
+
+// NewInstance constructor
+func NewInstance(class *Class) *Instance {
+	return &Instance{class: class, properties: map[string]interface{}{}}
+}
+
+// Instance representation
+type Instance struct {
+	class      *Class
+	properties map[string]interface{}
+}
+
+func (i *Instance) String() string {
+	return i.class.statement.name.lexeme + " instance"
+}
+
+func (i *Instance) Get(property *Token) (interface{}, error) {
+	v, ok := i.properties[property.lexeme]
+	if ok {
+		return v, nil
+	}
+
+	if m, ok := i.class.Get(property); ok {
+		return m, nil
+	}
+
+	return nil, InvalidProperty(property)
+}
+
+func (i *Instance) Set(property *Token, value interface{}) {
+	i.properties[property.lexeme] = value
 }

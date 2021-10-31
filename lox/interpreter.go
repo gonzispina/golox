@@ -59,7 +59,9 @@ func (i *Interpreter) lookUpVariable(lexeme string, variable *Variable) (interfa
 func (i *Interpreter) stringify(v interface{}) string {
 	dt := getDataType(v)
 	if dt == object {
-		return "nil"
+		if v == nil {
+			return "nil"
+		}
 	} else if dt == boolean {
 		if v.(bool) {
 			return "true"
@@ -223,6 +225,39 @@ func (i *Interpreter) visitCall(e *Call) (interface{}, error) {
 	return c.Call(i, e.paren, arguments)
 }
 
+func (i *Interpreter) visitGet(e *Get) (interface{}, error) {
+	o, err := i.evaluate(e.object)
+	if err != nil {
+		return nil, err
+	}
+
+	if instance, ok := o.(*Instance); ok {
+		return instance.Get(e.name)
+	}
+
+	return nil, NotAnObject(e.name)
+}
+
+func (i *Interpreter) visitSet(e *Set) (interface{}, error) {
+	o, err := i.evaluate(e.object)
+	if err != nil {
+		return nil, err
+	}
+
+	instance, ok := o.(*Instance)
+	if ok {
+		return nil, NotAnObject(e.name)
+	}
+
+	v, err := i.evaluate(e.value)
+	if err != nil {
+		return nil, err
+	}
+
+	instance.Set(e.name, v)
+	return nil, nil
+}
+
 func (i *Interpreter) visitPrintStmt(s *PrintStmt) (interface{}, error) {
 	value, err := i.evaluate(s.expression)
 	if err != nil {
@@ -264,9 +299,15 @@ func (i *Interpreter) visitBlockStmt(e *BlockStmt) (interface{}, error) {
 
 	i.environment = NewEnvironment(i.environment)
 	for _, statement := range e.statements {
-		_, err := i.execute(statement)
+		v, err := i.execute(statement)
 		if err != nil {
 			return nil, err
+		}
+
+		if v != nil {
+			if _, ok := statement.(*CircuitBreakStmt); ok {
+				return v, nil
+			}
 		}
 	}
 
@@ -358,5 +399,18 @@ func (i *Interpreter) visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, e
 	if e.statement != nil {
 		return i.execute(e.statement)
 	}
+	return nil, nil
+}
+
+func (i *Interpreter) visitClassStmt(e *ClassStmt) (interface{}, error) {
+	i.environment.define(e.name.lexeme, nil)
+
+	methods := map[string]*Function{}
+	for _, method := range e.methods {
+		methods[method.name.lexeme] = NewFunction(method, i.environment)
+	}
+
+	c := NewClass(e, methods, i.environment)
+	i.environment.assign(e.name.lexeme, c)
 	return nil, nil
 }

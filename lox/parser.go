@@ -75,9 +75,10 @@ func (p *Parser) synchronize() {
 	}
 }
 
-// declaration → funDeclaration | varDeclaration | statement;
+// declaration → classDeclaration | funDeclaration | varDeclaration | statement;
 // funDeclaration → IDENTIFIER "(" parameters? ")" block
 // varDeclaration → "var" IDENTIFIER ( "=" expression )? ";"
+// classDeclaration → "class" IDENTIFIER "{" function* "}"
 func (p *Parser) declaration(br, cont, rt *bool) (Stmt, error) {
 	if p.match(VAR) {
 		return p.varDeclaration()
@@ -85,6 +86,10 @@ func (p *Parser) declaration(br, cont, rt *bool) (Stmt, error) {
 
 	if p.match(FUN) {
 		return p.funDeclaration()
+	}
+
+	if p.match(CLASS) {
+		return p.classDeclaration()
 	}
 
 	return p.statement(br, cont, rt)
@@ -161,6 +166,33 @@ func (p *Parser) funDeclaration() (Stmt, error) {
 	}
 
 	return NewFunctionStmt(name, params, block, &rt), nil
+}
+
+func (p *Parser) classDeclaration() (Stmt, error) {
+	if !p.match(IDENTIFIER) {
+		return nil, ExpectedIdentifier(p.current())
+	}
+
+	name := p.previous()
+	if !p.match(LEFT_BRACE) {
+		return nil, ExpectedOpeningBrace(p.current())
+	}
+
+	var methods []*FunctionStmt
+	for !p.current().Is(RIGHT_BRACE) && !p.isAtEnd() {
+		f, err := p.funDeclaration()
+		if err != nil {
+			return nil, err
+		}
+
+		methods = append(methods, f.(*FunctionStmt))
+	}
+
+	if !p.match(RIGHT_BRACE) {
+		return nil, ExpectedEndingBrace(p.current())
+	}
+
+	return NewClassStmt(name, methods), nil
 }
 
 // statement → exprStmt | forStmt | ifStmt | printStmt | block ;
@@ -368,7 +400,7 @@ func (p *Parser) expression() (Expression, error) {
 	return p.assignment()
 }
 
-// assignment → IDENTIFIER "=" assignment | logic_or ;
+// assignment → ( call "." )? IDENTIFIER "=" assignment | logic_or ;
 func (p *Parser) assignment() (Expression, error) {
 	e, err := p.or()
 	if err != nil {
@@ -385,12 +417,14 @@ func (p *Parser) assignment() (Expression, error) {
 		return nil, err
 	}
 
-	variable, ok := e.(*Variable)
-	if !ok {
+	if variable, ok := e.(*Variable); ok {
+		return NewAssign(variable.token, value), nil
+	} else if get, ok := e.(*Variable); ok {
+		return NewSet(get, get.token, value), nil
+	} else {
 		return nil, InvalidTarget(equals)
 	}
 
-	return NewAssign(variable.token, value), nil
 }
 
 // or → and ( "or" and )* ;
@@ -522,39 +556,47 @@ func (p *Parser) unary() (Expression, error) {
 	return p.call()
 }
 
-// call → primary ( "(" arguments? ")" )* ;
+// call → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 func (p *Parser) call() (Expression, error) {
 	e, err := p.primary()
 	if err != nil {
 		return nil, err
 	}
 
-	for p.match(LEFT_PAREN) {
-		var arguments []Expression
-		if p.match(RIGHT_PAREN) {
-			e = NewCall(e, p.current(), arguments)
-			continue
-		}
-
-		for {
-			if len(arguments) > 255 {
-				return nil, ArgumentLimitExceeded(p.previous())
-			}
-
-			arg, err := p.expression()
-			if err != nil {
-				return nil, err
-			}
-
-			arguments = append(arguments, arg)
-			if p.match(COMMA) {
-				continue
-			} else if p.match(RIGHT_PAREN) {
+	for {
+		if p.match(LEFT_PAREN) {
+			var arguments []Expression
+			if p.match(RIGHT_PAREN) {
 				e = NewCall(e, p.current(), arguments)
-				break
-			} else {
-				return nil, UnexpectedToken(p.current(), COMMA, RIGHT_PAREN)
+				continue
 			}
+
+			for {
+				if len(arguments) > 255 {
+					return nil, ArgumentLimitExceeded(p.previous())
+				}
+
+				arg, err := p.expression()
+				if err != nil {
+					return nil, err
+				}
+
+				arguments = append(arguments, arg)
+				if p.match(COMMA) {
+					continue
+				} else if p.match(RIGHT_PAREN) {
+					e = NewCall(e, p.current(), arguments)
+				} else {
+					return nil, UnexpectedToken(p.current(), COMMA, RIGHT_PAREN)
+				}
+			}
+		} else if p.match(DOT) {
+			if !p.match(IDENTIFIER) {
+				return nil, ExpectedIdentifier(p.current())
+			}
+			e = NewGet(e, p.previous())
+		} else {
+			break
 		}
 	}
 

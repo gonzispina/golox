@@ -11,6 +11,7 @@ Most of the syntax is the same as proposed in the book except for:
 - **No 'while' statements:** I just don't like them.
 
 ## Extra features
+* Multiline comments
 * Enhanced error reporting
 * `continue` statement and its corresponding error handling
 * `break` statement and its corresponding error handling

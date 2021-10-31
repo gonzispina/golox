@@ -1,23 +1,26 @@
-fun fibonacii() {
-    var prev = 0;
-    var cur = 0;
+class fibonacci {
+    run() {
+        var prev = 0;
+        var cur = 0;
 
-    // lambda expression.
-    return fun () {
-        if cur == 0 {
-            cur = 1;
-            return 0;
+        // lambda expression.
+        return fun () {
+            if cur == 0 {
+                cur = 1;
+                return 0;
+            }
+
+            var res = cur;
+            cur = cur + prev;
+            prev = res;
+
+            return res;
         }
-
-        var res = cur;
-        cur = cur + prev;
-        prev = res;
-
-        return res;
     }
 }
 
-var next = fibonacii();
+
+var fib = fibonacci();
 for var i = 0; i < 10; i = i + 1 {
-    print next();
+    print fib.run()();
 }

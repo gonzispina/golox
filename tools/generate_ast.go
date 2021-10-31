@@ -12,6 +12,8 @@ func main() {
 		"Assign":   "name *Token, value Expression",
 		"Binary":   "left Expression, operator *Token, right Expression",
 		"Call":     "callee Expression, paren *Token, arguments []Expression",
+		"Get":      "object Expression, name *Token",
+		"Set":      "object Expression, name *Token, value Expression",
 		"Grouping": "expression Expression",
 		"Logical":  "left Expression, operator *Token, right Expression",
 		"Literal":  "value interface{}",
@@ -27,6 +29,7 @@ func main() {
 		"PrintStmt":        "expression Expression",
 		"VarStmt":          "name *Token, initializer Stmt",
 		"BlockStmt":        "statements []Stmt",
+		"ClassStmt":        "name *Token, methods []*FunctionStmt",
 		"CircuitBreakStmt": "value *bool, statement Stmt",
 	}
 

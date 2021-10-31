@@ -178,6 +178,18 @@ func (r *Resolver) visitAssign(e *Assign) (interface{}, error) {
 	return r.resolveLocal(e, e.name)
 }
 
+func (r *Resolver) visitGet(e *Get) (interface{}, error) {
+	return r.resolveExpression(e.object)
+}
+
+func (r *Resolver) visitSet(e *Set) (interface{}, error) {
+	_, err := r.resolveExpression(e.value)
+	if err != nil {
+		return nil, err
+	}
+	return r.resolveExpression(e.object)
+}
+
 func (r *Resolver) visitIfStmt(e *IfStmt) (interface{}, error) {
 	_, err := r.resolveExpression(e.expression)
 	if err != nil {
@@ -281,4 +293,10 @@ func (r *Resolver) visitFunctionStmt(e *FunctionStmt) (interface{}, error) {
 	}
 
 	return r.resolveFunction(e)
+}
+
+func (r *Resolver) visitClassStmt(e *ClassStmt) (interface{}, error) {
+	r.declare(e.name)
+	r.define(e.name)
+	return nil, nil
 }
