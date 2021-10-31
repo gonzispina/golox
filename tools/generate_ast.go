@@ -30,7 +30,7 @@ func main() {
 		"PrintStmt":        "expression Expression",
 		"VarStmt":          "name *Token, initializer Stmt",
 		"BlockStmt":        "statements []Stmt",
-		"ClassStmt":        "name *Token, methods []*FunctionStmt",
+		"ClassStmt":        "name *Token, super *Variable, methods []*FunctionStmt",
 		"CircuitBreakStmt": "value *bool, statement Stmt",
 	}
 

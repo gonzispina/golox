@@ -124,9 +124,10 @@ func (f *Function) Call(i *Interpreter, paren *Token, arguments []interface{}) (
 }
 
 // NewClass constructor
-func NewClass(statement *ClassStmt, methods map[string]*Function) *Class {
+func NewClass(statement *ClassStmt, super *Class, methods map[string]*Function) *Class {
 	return &Class{
 		statement: statement,
+		super:     super,
 		methods:   methods,
 	}
 }
@@ -134,6 +135,7 @@ func NewClass(statement *ClassStmt, methods map[string]*Function) *Class {
 // Class representation
 type Class struct {
 	statement *ClassStmt
+	super     *Class
 	methods   map[string]*Function
 }
 
@@ -151,6 +153,12 @@ func NewInstance(class *Class, i *Interpreter, paren *Token, arguments []interfa
 		class:      class,
 		properties: map[string]interface{}{},
 		methods:    map[string]*Function{},
+	}
+
+	if class.super != nil {
+		for name, method := range class.super.methods {
+			instance.methods[name] = method.Bind(instance)
+		}
 	}
 
 	for name, method := range class.methods {

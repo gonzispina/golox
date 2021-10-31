@@ -1,4 +1,10 @@
-class fibonacci {
+class infiniteSeries {
+    toString() {
+        print "infinite series";
+    }
+}
+
+class fibonacci < infiniteSeries {
     init() {
         this.cur = 0;
         this.prev = 0;
@@ -24,6 +30,8 @@ class fibonacci {
 
 
 var fib = fibonacci();
+fib.toString();
+
 for var i = 0; i < 10; i = i + 1 {
     print fib.next()();
 }

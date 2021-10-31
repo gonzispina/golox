@@ -34,6 +34,8 @@ const (
 	UnusedVariableCode = "UnusedVariable"
 	// ThisOutsideClassCode error
 	ThisOutsideClassCode = "ThisOutsideClass"
+	// NoSelfInheritanceCode error
+	NoSelfInheritanceCode = "NoSelfInheritance"
 
 	// InvalidDataTypeCode error
 	InvalidDataTypeCode = "InvalidDataType"
@@ -51,6 +53,8 @@ const (
 	NotAnObjectCode = "NotAnObject"
 	// InvalidPropertyCode error
 	InvalidPropertyCode = "InvalidProperty"
+	// NotAClassCode error
+	NotAClassCode = "NotAClass"
 )
 
 // Error representation
@@ -294,6 +298,18 @@ func ThisOutsideClass(t *Token) *SyntaxError {
 	}
 }
 
+// NoSelfInheritance raises when a class is trying to inherit from itself
+func NoSelfInheritance(t *Token) *SyntaxError {
+	return &SyntaxError{
+		err: Error{
+			description: "A class can't inherit from itself",
+			code:        NoSelfInheritanceCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
 // RuntimeError representation
 type RuntimeError struct {
 	err Error
@@ -392,6 +408,18 @@ func InvalidProperty(t *Token) *RuntimeError {
 	return &RuntimeError{
 		Error{
 			description: fmt.Sprintf("property '%s' is not defined", t.lexeme),
+			code:        InvalidPropertyCode,
+			line:        &t.line,
+			column:      &t.column,
+		},
+	}
+}
+
+// NotAClass raises when a class is trying to inherit from something that is not a class
+func NotAClass(t *Token) *RuntimeError {
+	return &RuntimeError{
+		Error{
+			description: fmt.Sprintf("cannot inherit from '%s', parent must be a class", t.lexeme),
 			code:        InvalidPropertyCode,
 			line:        &t.line,
 			column:      &t.column,

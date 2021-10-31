@@ -309,6 +309,17 @@ func (r *Resolver) visitClassStmt(e *ClassStmt) (interface{}, error) {
 	r.declare(e.name)
 	r.define(e.name)
 
+	if e.super != nil {
+		if e.super.token.lexeme == e.name.lexeme {
+			return nil, NoSelfInheritance(e.super.token)
+		}
+
+		_, err := r.resolveExpression(e.super)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	r.beginScope()
 	r.inClass = true
 	defer func() {

@@ -416,12 +416,26 @@ func (i *Interpreter) visitCircuitBreakStmt(e *CircuitBreakStmt) (interface{}, e
 func (i *Interpreter) visitClassStmt(e *ClassStmt) (interface{}, error) {
 	i.environment.define(e.name.lexeme, nil)
 
+	var super *Class
+	if e.super != nil {
+		s, err := i.evaluate(e.super)
+		if err != nil {
+			return nil, err
+		}
+
+		var ok bool
+		super, ok = s.(*Class)
+		if !ok {
+			return nil, NotAClass(e.super.token)
+		}
+	}
+
 	methods := map[string]*Function{}
 	for _, method := range e.methods {
 		methods[method.name.lexeme] = NewFunction(method, i.environment)
 	}
 
-	c := NewClass(e, methods)
+	c := NewClass(e, super, methods)
 	i.environment.assign(e.name.lexeme, c)
 	return nil, nil
 }

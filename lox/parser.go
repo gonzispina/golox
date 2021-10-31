@@ -78,7 +78,7 @@ func (p *Parser) synchronize() {
 // declaration → classDeclaration | funDeclaration | varDeclaration | statement;
 // funDeclaration → IDENTIFIER "(" parameters? ")" block
 // varDeclaration → "var" IDENTIFIER ( "=" expression )? ";"
-// classDeclaration → "class" IDENTIFIER "{" function* "}"
+// classDeclaration → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}"
 func (p *Parser) declaration(br, cont, rt *bool) (Stmt, error) {
 	if p.match(VAR) {
 		return p.varDeclaration()
@@ -174,6 +174,16 @@ func (p *Parser) classDeclaration() (Stmt, error) {
 	}
 
 	name := p.previous()
+
+	var super *Variable
+	if p.match(LESS) {
+		if !p.match(IDENTIFIER) {
+			return nil, ExpectedIdentifier(p.current())
+		}
+
+		super = NewVariable(p.previous())
+	}
+
 	if !p.match(LEFT_BRACE) {
 		return nil, ExpectedOpeningBrace(p.current())
 	}
@@ -192,7 +202,7 @@ func (p *Parser) classDeclaration() (Stmt, error) {
 		return nil, ExpectedEndingBrace(p.current())
 	}
 
-	return NewClassStmt(name, methods), nil
+	return NewClassStmt(name, super, methods), nil
 }
 
 // statement → exprStmt | forStmt | ifStmt | printStmt | block ;
